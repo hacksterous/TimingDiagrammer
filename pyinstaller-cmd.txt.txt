@@ -1,0 +1,1 @@
+pyinstaller --onefile --windowed -F --icon td.ico TimingDiagrammer.py
