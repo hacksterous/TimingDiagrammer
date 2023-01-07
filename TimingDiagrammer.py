@@ -725,11 +725,13 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.fileExit()
 
 	def fileNew (self, event=None):
-		self.scene.clear()
 		self.currentFileName = ""
 		self.setWindowTitle("Timing Diagrammer - Untitled")
 		if self.editorIsModified == True:
 			self.fileSave(None)
+		self.scene.clear()
+		self.plainTextEdit.clear()
+		self.editorIsModified == False
 
 	def fileOpen (self, event=None):
 		if self.editorIsModified == True:
@@ -744,6 +746,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.currentDirName = os.path.dirname(fileName)
 		self.currentFileName = os.path.basename(fileName)
 
+		if self.currentFileName == '':
+			return
 		if not os.path.isfile(fileName) or self.currentFileName == '':
 			msg = QMessageBox()
 			msg.setIcon(QMessageBox.Critical)
