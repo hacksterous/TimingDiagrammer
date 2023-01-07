@@ -104,6 +104,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.actionExport.triggered.connect(self.fileExport)
 		self.actionExit.triggered.connect(self.fileExit)
 		self.actionSettings.triggered.connect(self.optionsSettings)
+		self.plainTextEdit.installEventFilter(self)
 
 		self.setAutoFillBackground(True)
 		self.scene = QGraphicsScene(self)
@@ -715,23 +716,30 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.textVertOffset = -self.waveHeight/2
 
 	def textChangedHandler(self):
-		self.editorIsModified = True
 		self.plainTextEdit.ensureCursorVisible()
-		self.setWindowTitle("Timing Diagrammer - " + self.currentFileName + " [modified]")
+		if self.editorIsModified == True:
+			self.setWindowTitle("Timing Diagrammer - " + self.currentFileName + " [modified]")
 		self.reDrawCanvas()
 
 	def closeEvent(self, event):
 		event.accept()
 		self.fileExit()
 
+	def eventFilter(self, obj, event):
+		if (event.type() == QtCore.QEvent.KeyPress or event.type() == QtCore.QEvent.KeyRelease) and obj is self.plainTextEdit and self.plainTextEdit.hasFocus():
+			if event.text() != '':
+				if ord(event.text()) < 128:
+					self.editorIsModified = True
+		return False
+
 	def fileNew (self, event=None):
 		self.currentFileName = ""
-		self.setWindowTitle("Timing Diagrammer - Untitled")
 		if self.editorIsModified == True:
 			self.fileSave(None)
 		self.scene.clear()
 		self.plainTextEdit.clear()
 		self.editorIsModified == False
+		self.setWindowTitle("Timing Diagrammer - Untitled")
 
 	def fileOpen (self, event=None):
 		if self.editorIsModified == True:
@@ -885,7 +893,6 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			ret = qm.question(self,'Unsaved code', "Code has not been saved. Save?", qm.Yes | qm.No)
 			if ret == qm.Yes:
 				self.fileSave(None)
-
 		self.close()
 
 	def optionsSettings (self, event=None):
