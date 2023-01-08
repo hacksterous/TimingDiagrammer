@@ -1,5 +1,5 @@
 # TimingDiagrammer
-##An application to draw timing diagrams for digital logic.
+## An application to draw timing diagrams for digital logic.
 
 This is a successor to the [waves](https://github.com/hacksterous/waves) app that I wrote a long time ago.
 It was simple, but lacked a few features like saving entire canvas (not just the viewport) as an image (which
