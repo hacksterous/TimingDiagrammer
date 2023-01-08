@@ -1357,7 +1357,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 	def tdDrawHigh (self, waveCount=-1, nextC=None, basis=(0, 0)):
 		xBasis, yBasis = basis
 		x0 = xBasis + self.waveTransitionTime/2
-		if nextC in "zldxDXrR":
+		if nextC in "zldxDXrRpP":
 			x1 = x0 + self.waveHalfDuration
 		else:
 			x1 = x0 + self.waveHalfPeriod
@@ -1383,6 +1383,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			self.scene.addLine(QtCore.QLineF(x1, y0, x1 + self.waveTransitionTime, yBasis))
 		elif nextC == 'z':
 			self.scene.addLine(QtCore.QLineF(x1, y0, x1 + self.waveTransitionTime, yBasis - self.waveHeight/2))
+		elif nextC in 'pP':
+			self.scene.addLine(QtCore.QLineF(x1, y0, x1 + self.waveTransitionTime/2, yBasis))
 		#draw the grid
 		if (self.evenGridsEnabledGlobal == True and (waveCount % 2) == 0) or (self.oddGridsEnabledGlobal == True and (waveCount % 2) == 1):
 			self.scene.addLine(QtCore.QLineF(x0 + self.waveHalfDuration, yBasis - self.waveHeight - self.signalWaveYSpacing, 
@@ -1391,7 +1393,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 	def tdDrawLow (self, waveCount=-1, nextC=None, basis=(0, 0)):
 		xBasis, yBasis = basis
 		x0 = xBasis + self.waveTransitionTime/2
-		if nextC in "zhdxDXfFpP":
+		if nextC in "zhdxDXfF":
 			x1 = x0 + self.waveHalfDuration
 		else:
 			x1 = x0 + self.waveHalfPeriod
@@ -1750,7 +1752,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 				else:
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("light grey")))
-			elif nextC in 'lrR' or nextC == 'p' or nextC == 'P':
+			elif nextC in 'lrRpP':
 				a = x1 - self.waveTransitionTime
 				d = yBasis
 				pointList = [QtCore.QPointF(a - self.timeDelta, yBasis - self.waveHeight),
@@ -1809,7 +1811,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		x1 += self.waveTransitionTime
 		y0 = yBasis - self.waveHeight
 		y1 = yBasis
-		if nextC not in 'zhfFpP':
+		if nextC not in 'zhfF':
 			#angled line to bottom
 			self.scene.addLine(QtCore.QLineF(x0 - self.timeDelta, y0, x1 - self.timeDelta, y1))
 
@@ -1887,7 +1889,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				x1 + self.waveTransitionTime, yBasis - self.waveHeight), self.triPen)
 			self.scene.addLine(QtCore.QLineF(x1 + self.waveTransitionTime - self.timeDelta, yBasis, 
 				x1 + self.waveTransitionTime, yBasis), self.triPen)
-		elif nextC in 'hfF' or nextC in 'pP':
+		elif nextC in 'hfF':
 			self.scene.addLine(QtCore.QLineF(x1 - self.timeDelta, y0, c, yBasis - self.waveHeight), self.triPen)
 		elif nextC in 'lrR' or nextC in 'pP':
 			self.scene.addLine(QtCore.QLineF(x1 - self.timeDelta, y0, c, yBasis), self.triPen)

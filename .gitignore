@@ -68,3 +68,4 @@ tests/u.tim
 tests/xD.tim
 tests/XxX.tim
 *.pyc
+*.swp
