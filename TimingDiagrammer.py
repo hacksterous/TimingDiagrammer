@@ -117,7 +117,6 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.yMargin = 50
 		self.scene.addLine(QtCore.QLineF(-self.xMargin, -self.yMargin, -self.xMargin-1, -self.yMargin-1), QtGui.QPen(Qt.transparent)) #to anchor to top left
 
-
 		self.gridPenColor = "#aaaaaa"
 		self.gridPen = QtGui.QPen(Qt.DotLine)
 		self.gridPen.setColor(QtGui.QColor(self.gridPenColor))
@@ -556,12 +555,10 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					#print ("char is NOT FWDSLASH -- thisC = ", thisC)
 					lastC = thisC
 
-				#FIXME: move the scene location that was changed into the graphics viewport
-				#self.graphicsView.ensureVisible(xBasis, yBasis, self.waveHalfPeriod, self.signalWaveYSpacing)
 			#for
 
 			#print ("-- cmdNum is 2 -- A seeing cmd = ", cmd, " self.currentLineHasArrow = ", self.currentLineHasArrow)
-			if self.currentLineHasArrow == True:# and cmd3isNull == True:
+			if self.currentLineHasArrow == True:
 				self.arrowVertOffset = -self.waveHeight/2 - self.signalWaveYSpacing
 				self.linesWithArrow += 1
 
@@ -715,35 +712,71 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.currentLineHasArrow = False
 		self.textVertOffset = -self.waveHeight/2
 
-	def textChangedHandler(self):
+		self.showViewPortAtTextCursor()
+
+	def showViewPortAtTextCursor(self):
+		#FIXME: move the scene location that was changed into the graphics viewport
+		y = self.plainTextEdit.textCursor().blockNumber() + 1;
+		#x = self.plainTextEdit.textCursor().columnNumber() + 1;
+
+		#print ("textCursor Y = ", y)
+		xCurrent = self.signalWaveXOffset + self.sigNameColWidth + self.waveHalfPeriod
+		yCurrent = self.signalWaveYOffset + (y - 1) * (self.waveHeight + self.signalWaveYSpacing)
+		#print ("xCurrent = ", xCurrent, " yCurrent = ", yCurrent)
+		self.graphicsView.ensureVisible(xCurrent, yCurrent, self.waveHalfPeriod, self.signalWaveYSpacing)
+
+	def textChangedHandler(self, event=None):
 		self.plainTextEdit.ensureCursorVisible()
 		if self.editorIsModified == True:
 			self.setWindowTitle("Timing Diagrammer - " + self.currentFileName + " [modified]")
 		self.reDrawCanvas()
 
 	def closeEvent(self, event):
-		event.accept()
 		self.fileExit()
 
 	def eventFilter(self, obj, event):
 		if (event.type() == QtCore.QEvent.KeyPress or event.type() == QtCore.QEvent.KeyRelease) and obj is self.plainTextEdit and self.plainTextEdit.hasFocus():
+			modifiers = QtGui.QGuiApplication.keyboardModifiers()
+			if modifiers == QtCore.Qt.ControlModifier or modifiers == QtCore.Qt.AltModifier \
+					or modifiers == (QtCore.Qt.ControlModifier | QtCore.Qt.ShiftModifier) \
+					or modifiers == (QtCore.Qt.ControlModifier | QtCore.Qt.AltModifier) \
+					or modifiers == (QtCore.Qt.ShiftModifier | QtCore.Qt.AltModifier) \
+					or modifiers == (QtCore.Qt.ShiftModifier | QtCore.Qt.AltModifier | QtCore.Qt.ControlModifier):
+				return False
 			if event.text() != '':
 				if ord(event.text()) < 128:
 					self.editorIsModified = True
+					print ("eventFilter: self.editorIsModified is set to True")
 		return False
 
 	def fileNew (self, event=None):
 		self.currentFileName = ""
 		if self.editorIsModified == True:
-			self.fileSave(None)
+			qm = QMessageBox()
+			qm.setIcon(QMessageBox.Question)
+			ret = qm.question(self,'Buffer Save Dialog', "Buffer contents have not been saved. Save?", qm.Yes | qm.No | qm.Cancel)
+			if ret == qm.Cancel:
+				return
+			elif ret == qm.Yes:
+				self.fileSave(None)
+			else:
+				print ("Buffer Save Dialog question returned = NO = ", ret)
 		self.scene.clear()
 		self.plainTextEdit.clear()
-		self.editorIsModified == False
+		self.editorIsModified = False
+		print ("fileNew: self.editorIsModified is set to False = ", self.editorIsModified)
 		self.setWindowTitle("Timing Diagrammer - Untitled")
 
 	def fileOpen (self, event=None):
+		#print ("fileOpen: self.fileOpen = ", self.editorIsModified)
 		if self.editorIsModified == True:
-			self.fileSave(None)
+			qm = QMessageBox()
+			qm.setIcon(QMessageBox.Question)
+			ret = qm.question(self,'Buffer Save Dialog', "Buffer contents have not been saved. Save?", qm.Yes | qm.No | qm.Cancel)
+			if ret == qm.Cancel:
+				return
+			elif ret == qm.Yes:
+				self.fileSave(None)
 
 		self.expandDir()
 		options = QFileDialog.Options()
@@ -811,8 +844,10 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			qm.setIcon(QMessageBox.Question)
 			ret = qm.Yes
 			if os.path.isfile(self.currentFileName):
-				ret = qm.question(self,'File Exists', "File exists. Overwrite?", qm.Yes | qm.No)
-			if ret == qm.Yes:
+				ret = qm.question(self,'File Exists', "File exists. Overwrite?", qm.Yes | qm.No | qm.Cancel)
+			if ret == qm.Cancel:
+				return
+			elif ret == qm.Yes:
 				self.writeCurrentFileBackend()
 		elif self.currentFileName == '.tim':
 			msg = QMessageBox()
@@ -872,8 +907,10 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			qm.setIcon(QMessageBox.Question)
 			ret = qm.Yes
 			if not os.path.isfile(self.currentFileName):
-				ret = qm.question(self,'File Save Requirement', "File must be saved before exporting. Continue?", qm.Yes | qm.No)
-				if ret == qm.Yes:
+				ret = qm.question(self,'Buffer Save Dialog', "File must be saved before exporting. Continue?", qm.Yes | qm.No | qm.Cancel)
+				if ret == qm.Cancel:
+					return
+				elif ret == qm.Yes:
 					self.fileSaveAs(None)
 					canExport = True
 		if canExport == True:
@@ -886,12 +923,14 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			msg.exec_()
 
 	def fileExit (self, event=None):
-		#print ("fileExit: self.fileExit = ", self.editorIsModified)
+		print ("fileExit: self.fileExit = ", self.editorIsModified)
 		if self.editorIsModified == True:
 			qm = QMessageBox()
 			qm.setIcon(QMessageBox.Question)
-			ret = qm.question(self,'Unsaved code', "Code has not been saved. Save?", qm.Yes | qm.No)
-			if ret == qm.Yes:
+			ret = qm.question(self,'Unsaved code', "Code has not been saved. Save?", qm.Yes | qm.No | qm.Cancel)
+			if ret == qm.Cancel:
+				return
+			elif ret == qm.Yes:
 				self.fileSave(None)
 		self.close()
 
