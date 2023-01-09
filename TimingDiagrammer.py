@@ -164,9 +164,10 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.preferenceValuesList = []
 		self.evenGridsEnabledGlobal = True
 		self.oddGridsEnabledGlobal = True
+		self.pendingDiscardModifierKey = False
 
 		self.currentDirName = "."
-		self.currentFileName = ""
+		self.currentFileName = '.tim'
 		self.plainTextEdit.textChanged.connect(self.textChangedHandler)
 		self.shortcutNew = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+N'), self)
 		self.shortcutNew.activated.connect(self.fileNew)
@@ -178,6 +179,13 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.shortcutExit.activated.connect(self.fileExit)
 		self.plainTextEdit.setFocus()
 		self.setWindowTitle("Timing Diagrammer - Untitled")
+		print ("========== sys.argv = ", sys.argv)
+		if len(sys.argv) > 1:
+			fileName = sys.argv[1]
+			if os.path.isfile(fileName):
+				self.currentDirName = os.path.dirname(fileName)
+				self.currentFileName = os.path.basename(fileName)
+				self.fileReadBackend()
 
 	def resolvednextC (self, cmd):
 		i = 0
@@ -727,30 +735,54 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 
 	def textChangedHandler(self, event=None):
 		self.plainTextEdit.ensureCursorVisible()
-		if self.editorIsModified == True:
-			self.setWindowTitle("Timing Diagrammer - " + self.currentFileName + " [modified]")
+		#if self.editorIsModified == True:
+		#	self.setWindowTitle("Timing Diagrammer - " + self.currentFileName + " [modified]")
 		self.reDrawCanvas()
 
 	def closeEvent(self, event):
-		self.fileExit()
+		#self.fileExit()
+		print ("closeEvent: self.editorIsModified = ", self.editorIsModified)
+		if self.editorIsModified == True:
+			qm = QMessageBox()
+			qm.setIcon(QMessageBox.Question)
+			ret = qm.question(self,'Unsaved code', "Code has not been saved. Save?", qm.Yes | qm.No)
+			if ret == qm.Yes:
+				success = self.fileSave(None)
+				if success:
+					msg = QMessageBox()
+					msg.setIcon(QMessageBox.Information)
+					msg.setText("Saved file " + os.path.join(self.currentDirName, self.currentFileName) + ".")
+					msg.setWindowTitle("File Write Completed")
+					msg.exec_()
+			else:
+				self.close()
 
 	def eventFilter(self, obj, event):
-		if (event.type() == QtCore.QEvent.KeyPress or event.type() == QtCore.QEvent.KeyRelease) and obj is self.plainTextEdit and self.plainTextEdit.hasFocus():
-			modifiers = QtGui.QGuiApplication.keyboardModifiers()
-			if modifiers == QtCore.Qt.ControlModifier or modifiers == QtCore.Qt.AltModifier \
-					or modifiers == (QtCore.Qt.ControlModifier | QtCore.Qt.ShiftModifier) \
-					or modifiers == (QtCore.Qt.ControlModifier | QtCore.Qt.AltModifier) \
-					or modifiers == (QtCore.Qt.ShiftModifier | QtCore.Qt.AltModifier) \
-					or modifiers == (QtCore.Qt.ShiftModifier | QtCore.Qt.AltModifier | QtCore.Qt.ControlModifier):
-				return False
-			if event.text() != '':
-				if ord(event.text()) < 128:
-					self.editorIsModified = True
-					print ("eventFilter: self.editorIsModified is set to True")
+		if obj is self.plainTextEdit and self.plainTextEdit.hasFocus():
+			if event.type() == QtCore.QEvent.KeyPress or event.type() == QtCore.QEvent.KeyRelease:
+				modifiers = QtGui.QGuiApplication.keyboardModifiers()
+				if modifiers == QtCore.Qt.ControlModifier or modifiers == QtCore.Qt.AltModifier \
+						or modifiers == (QtCore.Qt.ControlModifier | QtCore.Qt.ShiftModifier) \
+						or modifiers == (QtCore.Qt.ControlModifier | QtCore.Qt.AltModifier) \
+						or modifiers == (QtCore.Qt.ShiftModifier | QtCore.Qt.AltModifier) \
+						or modifiers == (QtCore.Qt.ShiftModifier | QtCore.Qt.AltModifier | QtCore.Qt.ControlModifier):
+					self.pendingDiscardModifierKey = True
+					return False
+
+			if event.type() == QtCore.QEvent.KeyRelease:
+				if self.pendingDiscardModifierKey == True:
+					self.pendingDiscardModifierKey = False
+					return False
+				else:
+					if event.text() != '':
+						print ("eventFilter: event.text() = ", event.text())
+						if ord(event.text()) < 128:
+							self.editorIsModified = True
+							self.setWindowTitle("Timing Diagrammer - " + self.currentFileName + " [modified]")
+							print ("eventFilter: self.editorIsModified is set to True")
 		return False
 
 	def fileNew (self, event=None):
-		self.currentFileName = ""
 		if self.editorIsModified == True:
 			qm = QMessageBox()
 			qm.setIcon(QMessageBox.Question)
@@ -758,12 +790,14 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			if ret == qm.Cancel:
 				return
 			elif ret == qm.Yes:
-				self.fileSave(None)
+				if self.currentFileName != '' and self.currentFileName != '.tim' and os.path.isfile(fileName):
+					self.writeCurrentFileBackend()
 			else:
 				print ("Buffer Save Dialog question returned = NO = ", ret)
 		self.scene.clear()
 		self.plainTextEdit.clear()
 		self.editorIsModified = False
+		self.currentFileName = '.tim'
 		print ("fileNew: self.editorIsModified is set to False = ", self.editorIsModified)
 		self.setWindowTitle("Timing Diagrammer - Untitled")
 
@@ -797,6 +831,9 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			msg.exec_()
 			return
 
+		self.fileReadBackend()
+
+	def fileReadBackend(self):
 		fullFileName = os.path.join(self.currentDirName, self.currentFileName)
 		try:
 			with open(fullFileName, 'r', encoding="utf-8", newline='\n') as f:
@@ -821,55 +858,69 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 	def writeCurrentFileBackend(self):
 		self.expandDir()
 		fullFileName = os.path.join(self.currentDirName, self.currentFileName)
+		success = 0
 		try:
 			with open(fullFileName, 'w', encoding="utf-8", newline='\n') as f:
 				f.write(self.plainTextEdit.toPlainText())
 				f.close()
 				self.editorIsModified = False
+				print ("writeCurrentFileBackend: self.editorIsModified = ", self.editorIsModified)
 				self.setWindowTitle("Timing Diagrammer - " + self.currentFileName)
+			success = 1
 		except:
 			msg = QMessageBox()
 			msg.setIcon(QMessageBox.Critical)
 			msg.setText("Error: Could not write to file " + fullFileName + ".")
 			msg.setWindowTitle("File Write Error")
 			msg.exec_()
+			success = 0
+		return success
 
 	def writeCurrentFile (self):
+		success = 0
 		if self.currentFileName[-4:] != '.tim':
 			self.currentFileName += '.tim'
 		if os.name == 'nt':
 			self.currentFileName = self.currentFileName.lower()
-		if self.currentFileName != '.tim' and os.path.exists(self.currentDirName):
+		if self.currentFileName != '' and self.currentFileName != '.tim' and os.path.exists(self.currentDirName):
 			qm = QMessageBox()
 			qm.setIcon(QMessageBox.Question)
 			ret = qm.Yes
 			if os.path.isfile(self.currentFileName):
 				ret = qm.question(self,'File Exists', "File exists. Overwrite?", qm.Yes | qm.No | qm.Cancel)
 			if ret == qm.Cancel:
-				return
+				return -1 #write cancelled
 			elif ret == qm.Yes:
-				self.writeCurrentFileBackend()
-		elif self.currentFileName == '.tim':
+				success = self.writeCurrentFileBackend()
+		elif self.currentFileName != '' and self.currentFileName == '.tim':
 			msg = QMessageBox()
 			msg.setIcon(QMessageBox.Critical)
 			msg.setText("Error: Illegal file name.")
 			msg.setWindowTitle("File Write Error")
 			msg.exec_()
+			success = 0 #write failed
 		elif not os.path.exists(self.currentDirName):
 			msg = QMessageBox()
 			msg.setIcon(QMessageBox.Critical)
 			msg.setText("Error: Illegal directory.")
 			msg.setWindowTitle("File Write Error")
 			msg.exec_()
+			success = 0
+		return success
 
 	def fileSave (self, event=None):
+		success = 0
+		if self.editorIsModified == False:
+			return -2 #no need of write
 		print ("fileSave: self.currentFileName = ", self.currentFileName)
 		if self.currentFileName != '' and self.currentFileName != '.tim':
-			self.writeCurrentFile()
+			success = self.writeCurrentFile()
 		else:
-			self.fileSaveAs(None)
+			success = self.fileSaveAs(None)
+		return success
 
 	def fileSaveAs (self, event=None):
+		success = 0
 		fDialog = QFileDialog()
 		if not os.path.exists(self.currentDirName):
 			self.currentDirName = "."
@@ -879,7 +930,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		if fileName != '' and fileName != '.tim':
 			self.currentDirName = os.path.dirname(fileName)
 			self.currentFileName = os.path.basename(fileName)
-			self.writeCurrentFile()
+			success = self.writeCurrentFile()
+		return success
 
 	def fileExport (self, event=None):
 		size = QtCore.QRectF(self.scene.sceneRect()).toRect().size()
@@ -923,16 +975,17 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			msg.exec_()
 
 	def fileExit (self, event=None):
-		print ("fileExit: self.fileExit = ", self.editorIsModified)
+		print ("fileExit: self.editorIsModified = ", self.editorIsModified)
 		if self.editorIsModified == True:
 			qm = QMessageBox()
 			qm.setIcon(QMessageBox.Question)
 			ret = qm.question(self,'Unsaved code', "Code has not been saved. Save?", qm.Yes | qm.No | qm.Cancel)
-			if ret == qm.Cancel:
-				return
-			elif ret == qm.Yes:
+			if ret == qm.Yes:
 				self.fileSave(None)
-		self.close()
+			elif ret == qm.Cancel:
+				return
+			else:
+				self.close()
 
 	def optionsSettings (self, event=None):
 		msg = QMessageBox()
@@ -1017,8 +1070,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			y0 = yBasis + self.arrowVertOffset
 			
 			self.tdDrawArrowHead((a, y0), 'R')
-			self.scene.addLine(QtCore.QLineF(a, y0, 
-				a, y0))
+			#self.scene.addLine(QtCore.QLineF(a, y0, a, y0))
 
 			self.scene.addLine(QtCore.QLineF(a, yBasis - self.waveHeight - self.arrowMarkAdjustUp,
 				a, y0 + self.arrowMarkAdjustDn))
