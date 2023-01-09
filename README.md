@@ -12,4 +12,5 @@ The usual disclaimer applies.
 
 ###    This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-![Here is an example -- ](https://raw.githubusercontent.com/hacksterous/TimingDiagrammer/blob/main/docsrc/example.jpg "Example")
+Here is an example -- 
+![example](https://user-images.githubusercontent.com/16697108/211286069-c7f1187a-1d1c-460d-991a-49ca38501e45.jpg)
