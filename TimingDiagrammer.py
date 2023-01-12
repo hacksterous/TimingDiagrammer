@@ -38,8 +38,14 @@ colorMap = {
 	'D': 'deepskyblue', 
 	'g': 'mediumaquamarine', 
 	'G': 'springgreen', 
+	'h': 'honeydew', 
+	'H': 'hotpink', 
+	'i': 'ivory', 
+	'I': 'indianred', 
 	'l': 'lavender', 
+	'L': 'lemonchiffon', 
 	'm': 'mistyrose', 
+	'M': 'magenta', 
 	'k': 'khaki', 
 	'o': 'orange',
 	'O': 'orchid',
@@ -51,7 +57,6 @@ colorMap = {
 	'v': 'violet', 
 	'w': 'white',
 	'W': 'wheat',
-	'x': 'black',
 	'y': 'light yellow', 
 	'Y': 'yellow', 
 	'z': 'plum',
@@ -73,6 +78,7 @@ textColorMap = {
 	'l': 'limegreen', 
 	'm': 'maroon', 
 	'M': 'magenta', 
+	'n': 'navy', 
 	'k': 'khaki', 
 	'o': 'orangered',
 	'O': 'olive',
@@ -125,6 +131,10 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.triPen = QtGui.QPen()
 		self.triPen.setColor(QtGui.QColor(self.triPenColor))
 
+		self.debugPenColor = "red"
+		self.debugPen = QtGui.QPen()
+		self.debugPen.setColor(QtGui.QColor(self.triPenColor))
+
 		self.gapBrushColor = "#eeeeee"
 		self.gapPen = QtGui.QPen()
 		self.gapPen.setColor(QtGui.QColor(self.gapBrushColor))
@@ -134,7 +144,6 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.fallClockArrow = False
 		self.droppedXCoord = -1
 		self.droppedYCoord = -1
-		self.pendingArrowDelay = 0
 		self.parent = parent
 		self.currentLineNumber = 1
 		self.arrowSize = 9
@@ -164,10 +173,13 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.preferenceValuesList = []
 		self.evenGridsEnabledGlobal = True
 		self.oddGridsEnabledGlobal = True
+		self.pendingArrowDelay = 0
 		self.pendingDiscardModifierKey = False
+		self.pendingTimeDelta = 0
+		self.discardModalDialogChars = False
 
 		self.currentDirName = "."
-		self.currentFileName = '.tim'
+		self.currentFileName = ''
 		self.plainTextEdit.textChanged.connect(self.textChangedHandler)
 		self.shortcutNew = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+N'), self)
 		self.shortcutNew.activated.connect(self.fileNew)
@@ -408,13 +420,13 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			self.tdDrawText(cmd)
 
 		elif cmdNum == 2:
-			self.currentLineHasArrow = False
 			#process waves
+			self.currentLineHasArrow = False
 			self.riseClockArrow = False
 			self.fallClockArrow = False
 			waveCount = 0
 			self.invertedClockHeight = 0
-			self.currentColor = 'w'
+			self.currentColor = 'x'
 			cNum = 0
 			cmd = cmd.strip()
 			lastC = chr(0)
@@ -452,6 +464,12 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				xBasis = self.signalWaveXOffset + self.sigNameColWidth + self.waveHalfPeriod * waveCount
 				yBasis = self.signalWaveYOffset + (self.currentLineNumber - self.linesWithArrow * self.arrowLineAdjust / 9) *\
 					(self.waveHeight + self.signalWaveYSpacing) + self.linesWithArrow * 2 * self.arrowLineAdjust
+
+				if thisC not in "DXz0123456789/|<->d":
+					#for meta chars, don't reset since following chars will decide
+					#for DXz, the pendingTimeDelta will be used
+					self.pendingTimeDelta = 0
+					print ("B. thisC = ", thisC, " self.pendingTimeDelta reset to ", self.pendingTimeDelta)
 
 				if thisC == '|':
 					if waveCount > 0:
@@ -539,11 +557,10 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					#a number follows a command for additional delay
 					self.timeDelta = int(int(thisC) * self.waveHalfDuration / 9)
 					#print (" -- additional delay set to = ", self.timeDelta)
-
 				elif thisC == '/':
 					self.tdDrawGap(waveCount, lastC, nextC, (xBasis, yBasis))
 					self.timeDelta = 0
-				elif thisC != '$':
+				else:
 					#print ("Error: Wrong code: " + thisC + ".")
 					self.label.setText("Error: Wrong code: " + thisC + ".")
 
@@ -674,6 +691,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			#cmd = cmd.replace (chr(2), ';') #put back the ';' character
 			cmd4 = ''
 			#print ("cmd is ", cmd, "line value passed is ", line, "cmdNum = ", cmdNum)
+			self.pendingTimeDelta = 0
 			if cmdNum == 0:
 				cmdNum = 1
 				self.currentLineNumber = line
@@ -734,9 +752,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.graphicsView.ensureVisible(xCurrent, yCurrent, self.waveHalfPeriod, self.signalWaveYSpacing)
 
 	def textChangedHandler(self, event=None):
+		print ("############## textChangedHandler ##############")
 		self.plainTextEdit.ensureCursorVisible()
-		#if self.editorIsModified == True:
-		#	self.setWindowTitle("Timing Diagrammer - " + self.currentFileName + " [modified]")
 		self.reDrawCanvas()
 
 	def closeEvent(self, event):
@@ -775,11 +792,16 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					return False
 				else:
 					if event.text() != '':
-						print ("eventFilter: event.text() = ", event.text())
+						print ("eventFilter: event.text() = ", ord(event.text()), "  obj", obj)
 						if ord(event.text()) < 128:
-							self.editorIsModified = True
-							self.setWindowTitle("Timing Diagrammer - " + self.currentFileName + " [modified]")
-							print ("eventFilter: self.editorIsModified is set to True")
+							if self.discardModalDialogChars == True:# and (ord(event.text()) == 13 or ord(event.text()) == 27):
+								#an enter or escape from fileSaveAs dialog can cause editorIsModified to be set to True
+								self.discardModalDialogChars = False
+								return False
+							else:
+								self.editorIsModified = True
+								self.setWindowTitle("Timing Diagrammer - " + self.currentFileName + " [modified]")
+								print ("eventFilter: self.editorIsModified is set to True")
 		return False
 
 	def fileNew (self, event=None):
@@ -832,6 +854,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			return
 
 		self.fileReadBackend()
+		self.discardModalDialogChars = True
 
 	def fileReadBackend(self):
 		fullFileName = os.path.join(self.currentDirName, self.currentFileName)
@@ -882,17 +905,9 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			self.currentFileName += '.tim'
 		if os.name == 'nt':
 			self.currentFileName = self.currentFileName.lower()
-		if self.currentFileName != '' and self.currentFileName != '.tim' and os.path.exists(self.currentDirName):
-			qm = QMessageBox()
-			qm.setIcon(QMessageBox.Question)
-			ret = qm.Yes
-			if os.path.isfile(self.currentFileName):
-				ret = qm.question(self,'File Exists', "File exists. Overwrite?", qm.Yes | qm.No | qm.Cancel)
-			if ret == qm.Cancel:
-				return -1 #write cancelled
-			elif ret == qm.Yes:
-				success = self.writeCurrentFileBackend()
-		elif self.currentFileName != '' and self.currentFileName == '.tim':
+		if self.currentFileName != '' and self.currentFileName != '.tim':
+			success = self.writeCurrentFileBackend()
+		elif self.currentFileName != '':
 			msg = QMessageBox()
 			msg.setIcon(QMessageBox.Critical)
 			msg.setText("Error: Illegal file name.")
@@ -931,6 +946,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			self.currentDirName = os.path.dirname(fileName)
 			self.currentFileName = os.path.basename(fileName)
 			success = self.writeCurrentFile()
+			self.discardModalDialogChars = True
 		return success
 
 	def fileExport (self, event=None):
@@ -1168,13 +1184,16 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				x1 += self.waveTransitionTime/2
 				#print ("nextC in DdXx")
 				#print ("self.currentColor == ", self.currentColor)
-				if nextC in 'Dd' and self.currentColor != 'w':
-					color = colorMap[self.currentColor]
+				if nextC in 'Dd' and self.currentColor != 'x':
+					if self.currentColor in colorMap.keys():
+						color = colorMap[self.currentColor]
+					else:
+						color = "light grey"
 				else:
 					color = "light grey"
 
-				if nextC in 'Xx' or (nextC in 'Dd' and self.currentColor != 'w'):
-					#print ("== seeing nextC in 'Xx' or (nextC == 'Dd' and self.currentColor != 'w')")
+				if nextC in 'Xx' or (nextC in 'Dd' and self.currentColor != 'x'):
+					#print ("== seeing nextC in 'Xx' or (nextC == 'Dd' and self.currentColor != 'x')")
 					c = x0 + self.waveTransitionTime
 					#self.canvas.create_polygon(x1, yBasis - self.waveHeight, 
 					#	c + self.waveTransitionTime/2, yBasis - self.waveHeight, c + self.waveTransitionTime/2, yBasis)
@@ -1257,12 +1276,15 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			elif nextC in 'DdXx':
 				x0 = x1
 				x1 += self.waveTransitionTime
-				if nextC in 'Dd' and self.currentColor != 'w':
-					color = colorMap[self.currentColor]
+				if nextC in 'Dd' and self.currentColor != 'x':
+					if self.currentColor in colorMap.keys():
+						color = colorMap[self.currentColor]
+					else:
+						color = "light grey"
 				else:
 					color = "light grey"
 
-				if nextC in 'Xx' or (nextC in 'Dd' and self.currentColor != 'w'):
+				if nextC in 'Xx' or (nextC in 'Dd' and self.currentColor != 'x'):
 					c = x0# + self.waveTransitionTime
 					pointList = [QtCore.QPointF(x0, yBasis - self.waveHeight),
 							QtCore.QPointF(x0 + self.waveTransitionTime, yBasis - self.waveHeight),
@@ -1289,11 +1311,11 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		color = "light grey"
 
 		if nextC in "dxDXpP":
-			if nextC in 'Dd' and self.currentColor != 'w':
+			if nextC in 'Dd' and self.currentColor != 'x':
 				if self.currentColor in colorMap.keys():
 					color = colorMap[self.currentColor]
 
-			if nextC in 'xX' or (nextC in 'dD' and self.currentColor != 'w'):
+			if nextC in 'xX' or (nextC in 'dD' and self.currentColor != 'x'):
 				c = x1 + self.waveTransitionTime + self.timeDelta
 				pointList = [QtCore.QPointF(x1, yBasis - self.waveHeight), 
 							QtCore.QPointF(c, yBasis - self.waveHeight), 
@@ -1359,9 +1381,12 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		color = "light grey"
 
 		if nextC in "dxDX":
-			if nextC in 'xX' or (nextC in 'Dd' and self.currentColor != 'w'):
-				if nextC in 'Dd' and self.currentColor != 'w':
-					color = colorMap[self.currentColor]
+			if nextC in 'xX' or (nextC in 'Dd' and self.currentColor != 'x'):
+				if nextC in 'Dd' and self.currentColor != 'x':
+					if self.currentColor in colorMap.keys():
+						color = colorMap[self.currentColor]
+					else:
+						color = "light grey"
 
 				c = x1 + self.waveTransitionTime + self.timeDelta
 				pointList = [QtCore.QPointF(x1, yBasis), 
@@ -1370,11 +1395,12 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 							QtCore.QPointF(c - self.timeDelta, yBasis - self.waveHeight)]
 				self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 			self.scene.addLine(QtCore.QLineF(x1, yBasis, x1 + self.waveTransitionTime + self.timeDelta, yBasis))
-		#elif nextC == 'l' or nextC == 'r':
 		elif nextC in 'lr':
 			self.scene.addLine(QtCore.QLineF(x1, y0, x1 + self.waveTransitionTime/2, yBasis - self.waveHeight/2))
 			self.scene.addLine(QtCore.QLineF(x1 + self.waveTransitionTime/2, yBasis - self.waveHeight/2, x1 + self.waveTransitionTime, yBasis))
 			self.scene.addLine(QtCore.QLineF(x1 + self.waveTransitionTime, yBasis, x1 + self.waveTransitionTime + self.timeDelta, yBasis))
+		elif nextC in 'pP':
+			self.scene.addLine(QtCore.QLineF(x1, yBasis, x1 + self.waveTransitionTime/2 + self.timeDelta, yBasis))
 		elif nextC == 'z':
 			self.scene.addLine(QtCore.QLineF(x1, y0, x1 + self.waveTransitionTime, yBasis - self.waveHeight/2))
 			self.scene.addLine(QtCore.QLineF(x1 + self.waveTransitionTime, yBasis - self.waveHeight/2, 
@@ -1419,12 +1445,15 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.scene.addLine(QtCore.QLineF(x0, y0, x1, y1))
 		if nextC in "ldxDXrR":
 			#print ("== seeing h and nextC in ldxDXrRpP")
-			if nextC in 'Dd' and self.currentColor != 'w':
-				color = colorMap[self.currentColor]
+			if nextC in 'Dd' and self.currentColor != 'x':
+				if self.currentColor in colorMap.keys():
+					color = colorMap[self.currentColor]
+				else:
+					color = "light grey"
 			else:
 				color = "light grey"
 
-			if nextC in 'xX' or nextC == 'X' or (nextC in 'Dd' and self.currentColor != 'w'):
+			if nextC in 'xX' or nextC == 'X' or (nextC in 'Dd' and self.currentColor != 'x'):
 				c = x1 + self.waveTransitionTime
 				pointList = [QtCore.QPointF(x1, yBasis - self.waveHeight), 
 							QtCore.QPointF(c, yBasis - self.waveHeight), 
@@ -1454,12 +1483,15 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.scene.addLine(QtCore.QLineF(x0, y0, x1, y1))
 
 		if nextC in "hdxDXfF":
-			if nextC in 'Dd' and self.currentColor != 'w':
-				color = colorMap[self.currentColor]
+			if nextC in 'Dd' and self.currentColor != 'x':
+				if self.currentColor in colorMap.keys():
+					color = colorMap[self.currentColor]
+				else:
+					color = "light grey"
 			else:
 				color = "light grey"
 
-			if nextC in 'xX' or (nextC in 'Dd' and self.currentColor != 'w'):
+			if nextC in 'xX' or (nextC in 'Dd' and self.currentColor != 'x'):
 				#print ("== seeing l and nextC in xdDX")
 				c = x1 + self.waveTransitionTime
 				pointList = [QtCore.QPointF(x1, yBasis), 
@@ -1479,7 +1511,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				x0 + self.waveHalfDuration, yBasis), self.gridPen)
 
 	def tdDrawDatadx(self, waveCount=-1, lastC=None, thisC=None, nextC=None, basis=(0, 0)):
-		#print ("tdDrawDatadx: thisC=", thisC, " nextC=", nextC)
+		print ("tdDrawDatadx: thisC=", thisC, " nextC=", nextC, " lastC=", lastC)
+		print ("tdDrawDatadx: self.currentColor=", self.currentColor, " self.pendingTimeDelta=", self.pendingTimeDelta, " lastC=", lastC)
 		xBasis, yBasis = basis
 		color = "light grey"
 		if self.currentColor in colorMap.keys():
@@ -1498,7 +1531,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		else:
 			x1 = x0 + self.waveHalfPeriod
 
-		if thisC == 'x' or (thisC == 'd' and self.currentColor != 'w'):
+		if thisC == 'x' or (thisC == 'd' and self.currentColor != 'x'):
 			#print ("if A --------")
 			y0 = yBasis
 			y1 = yBasis
@@ -1513,37 +1546,24 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			g = a
 			h = f
 
-			pointList = [QtCore.QPointF(a, b),
+			pointList = [QtCore.QPointF(a - self.pendingTimeDelta, b),
 						QtCore.QPointF(c, d),
 						QtCore.QPointF(e, f),
-						QtCore.QPointF(g, h)]
-			if (thisC == 'd' and self.currentColor != 'w'):
+						QtCore.QPointF(g - self.pendingTimeDelta, h)]
+			if (thisC == 'd' and self.currentColor != 'x'):
 				self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
-				#self.canvas.create_polygon(a, b, c, d, e, f, g, h)
-				if waveCount != 0 and lastC in 'DXz':
-					# to handle cases like: D$rD - when the first D is seen, the color is not yet known, so the
-					#left triangle for the next D cannot be filled - it must be deferred when the next D is being
-					#processed as thisC
+				if waveCount != 0 and lastC in 'DXzx':
 					if lastC == 'z':
-						pointList = [QtCore.QPointF(xBasis + self.waveTransitionTime/2, yBasis),
-								QtCore.QPointF(xBasis - self.waveTransitionTime/2, yBasis - self.waveHeight/2),
-								QtCore.QPointF(xBasis + self.waveTransitionTime/2, yBasis - self.waveHeight)]
+						pointList = [QtCore.QPointF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis),
+								QtCore.QPointF(xBasis - self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight/2),
+								QtCore.QPointF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight)]
 					else:
-						pointList = [QtCore.QPointF(xBasis + self.waveTransitionTime/2, yBasis),
-							QtCore.QPointF(xBasis, yBasis - self.waveHeight/2),
-							QtCore.QPointF(xBasis + self.waveTransitionTime/2, yBasis - self.waveHeight)]
+						pointList = [QtCore.QPointF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis),
+							QtCore.QPointF(xBasis - self.pendingTimeDelta, yBasis - self.waveHeight/2),
+							QtCore.QPointF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight)]
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
-					if lastC == 'z':
-						#redo the angled lines only if last was D or X or z
-						self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2, yBasis, xBasis - self.waveTransitionTime/2, yBasis - self.waveHeight/2))
-						self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2, yBasis - self.waveHeight, xBasis - self.waveTransitionTime/2, yBasis - self.waveHeight/2))
-					else:
-						self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2, yBasis, xBasis, yBasis - self.waveHeight/2))
-						self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2, yBasis - self.waveHeight, xBasis, yBasis - self.waveHeight/2))
-				
 			else:
 				self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("light grey")))
-				#self.canvas.create_polygon(a, b, c, d, e, f, g, h)
 
 			if nextC == 'z':
 				c = x1 + self.waveTransitionTime
@@ -1551,7 +1571,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				pointList = [QtCore.QPointF(x1, yBasis),
 							QtCore.QPointF(c, d),
 							QtCore.QPointF(x1, yBasis - self.waveHeight)]
-				if (thisC == 'd' and self.currentColor != 'w'):
+				if (thisC == 'd' and self.currentColor != 'x'):
 				#	self.canvas.create_polygon(x1, yBasis, c, d, x1, yBasis - self.waveHeight)
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 				else:
@@ -1562,7 +1582,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				pointList = [QtCore.QPointF(x1, yBasis),
 							QtCore.QPointF(c, yBasis),
 							QtCore.QPointF(x1, yBasis - self.waveHeight)]
-				if (thisC == 'd' and self.currentColor != 'w'):
+				if (thisC == 'd' and self.currentColor != 'x'):
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 					#self.canvas.create_polygon(x1, yBasis, c, yBasis, x1, yBasis - self.waveHeight, 
 					#	tags=('wave'+line), fill=colorMap[self.currentColor])
@@ -1575,7 +1595,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				pointList = [QtCore.QPointF(x1, yBasis),
 							QtCore.QPointF(x1, yBasis - self.waveHeight),
 							QtCore.QPointF(c, yBasis - self.waveHeight)]
-				if (thisC == 'd' and self.currentColor != 'w'):
+				if (thisC == 'd' and self.currentColor != 'x'):
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 					#self.canvas.create_polygon(x1, yBasis, c, yBasis - self.waveHeight, x1, yBasis - self.waveHeight, 
 					#	tags=('wave'+line), fill=colorMap[self.currentColor])
@@ -1586,7 +1606,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			elif nextC in 'dXD' or (thisC == 'd' and nextC == 'x'): 
 				a = x1 + self.waveTransitionTime/2
 				c = x1 + self.waveTransitionTime
-				if (thisC == 'd' and self.currentColor != 'w'):
+				if (thisC == 'd' and self.currentColor != 'x'):
 					pointList = [QtCore.QPointF(x1, yBasis),
 								QtCore.QPointF(x1 + self.waveTransitionTime/2, yBasis - self.waveHeight/2),
 								QtCore.QPointF(x1, yBasis - self.waveHeight)]
@@ -1623,7 +1643,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 						#self.canvas.create_polygon(x1, yBasis, x1 + self.waveTransitionTime, yBasis, x1 + self.waveTransitionTime, yBasis - self.waveHeight, x1, yBasis - self.waveHeight)
 						
 				if thisC == 'x':
-					if nextC in 'dD' and self.currentColor != 'w':
+					if nextC in 'dD' and self.currentColor != 'x':
 						pointList = [QtCore.QPointF(x1 + self.waveTransitionTime, yBasis),
 								QtCore.QPointF(a, yBasis - self.waveHeight/2),
 								QtCore.QPointF(x1 + self.waveTransitionTime, yBasis - self.waveHeight)]
@@ -1662,13 +1682,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.scene.addLine(QtCore.QLineF(x0, y0, x1, y1))
 
 		if nextC in 'pP':
-			#	self.scene.addLine(QtCore.QLineF(x1, yBasis, x1 + self.waveTransitionTime, yBasis - self.waveHeight))
-			#	self.scene.addLine(QtCore.QLineF(x1, yBasis - self.waveHeight, x1 + self.waveTransitionTime, yBasis - self.waveHeight))
-			#else:
-				#clock drawn next is not inverted
 			self.scene.addLine(QtCore.QLineF(x1, yBasis, x1 + self.waveTransitionTime, yBasis))
 			self.scene.addLine(QtCore.QLineF(x1, yBasis - self.waveHeight, x1 + self.waveTransitionTime, yBasis))
-
 		elif nextC in 'lrR':
 			self.scene.addLine(QtCore.QLineF(x1, y0, x1 + self.waveTransitionTime, yBasis))
 			self.scene.addLine(QtCore.QLineF(x1, yBasis, x1 + self.waveTransitionTime, yBasis))
@@ -1678,14 +1693,27 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		elif nextC == 'z':
 			self.scene.addLine(QtCore.QLineF(x1, y0, x1 + self.waveTransitionTime, yBasis - self.waveHeight/2))
 			self.scene.addLine(QtCore.QLineF(x1, yBasis, x1 + self.waveTransitionTime, yBasis - self.waveHeight/2))
+		
+		if (thisC == 'd' and self.currentColor != 'x'):
+			if waveCount != 0 and lastC in 'DXzx':
+				if lastC == 'z':
+					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis, 
+						xBasis - self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight/2))
+					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight, 
+						xBasis - self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight/2), self.debugPen)
+				else:
+					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis, 
+						xBasis - self.pendingTimeDelta, yBasis - self.waveHeight/2))
+					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight, 
+						xBasis - self.pendingTimeDelta, yBasis - self.waveHeight/2))
 
-		#draw the grid
-		#if (self.evenGridsEnabledGlobal == True and (waveCount % 2) == 0) or (self.oddGridsEnabledGlobal == True and (waveCount % 2) == 1):
-		#	self.scene.addLine(QtCore.QLineF(x0 + self.waveHalfDuration, yBasis - self.waveHeight - self.signalWaveYSpacing, 
-		#		x0 + self.waveHalfDuration,	yBasis), self.gridPen)
+				self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis, x1 - self.pendingTimeDelta, yBasis))
+				self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight, x1 - self.pendingTimeDelta, yBasis - self.waveHeight))
+		self.pendingTimeDelta = 0
 
 	def tdDrawDataDX(self, waveCount=-1, lastC=None, thisC=None, nextC=None, basis=(0, 0)):
-		#print ("tdDrawDataDX: thisC=", thisC, " ord nextC=", ord(nextC), nextC)
+		print ("tdDrawDataDX: thisC=", thisC, " ord nextC=", ord(nextC), nextC, " lastC=", lastC)
+		print ("tdDrawDataDX: at start, self.pendingTimeDelta=", self.pendingTimeDelta)
 		xBasis, yBasis = basis
 		x0 = xBasis + self.waveTransitionTime/2
 		x1 = x0 + self.waveHalfDuration
@@ -1715,37 +1743,48 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			color = colorMap[self.currentColor]
 
 		#print ("tdDrawDataDX: 0. thisC == 'D' and self.currentColor = ", self.currentColor)
-		if thisC == 'X' or (thisC == 'D' and self.currentColor != 'w'):
-			if (thisC == 'D' and self.currentColor != 'w'):
-				#print ("tdDrawDataDX: Z. thisC == 'D' and self.currentColor != 'w'")
-				pointList = [QtCore.QPointF(a, b),
+		if thisC == 'X' or (thisC == 'D' and self.currentColor != 'x'):
+			if (thisC == 'D' and self.currentColor != 'x'):
+				print ("tdDrawDataDX: 1. thisC == 'D' and self.currentColor != 'x'")
+				pointList = [QtCore.QPointF(a - self.pendingTimeDelta, b),
 							QtCore.QPointF(c - self.timeDelta, d),
 							QtCore.QPointF(e - self.timeDelta, y1 + self.waveHeight/2),
 							QtCore.QPointF(g - self.timeDelta, h),
-							QtCore.QPointF(i, j)]
+							QtCore.QPointF(i - self.pendingTimeDelta, j)]
 				self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
-				if waveCount != 0 and lastC in 'DXz':
+				if waveCount != 0 and lastC in 'DXzx':
+					print ("tdDrawDataDX: 1. waveCount != 0 and lastC in 'DXzx'")
 					#FIX PR0
 					# to handle cases like: D$rD - when the first D is seen, the color is not yet known, so the
 					#left triangle for the next D cannot be filled - it must be deferred when the next D is being
 					#processed as thisC
 					if lastC == 'z':
-						pointList = [QtCore.QPointF(xBasis + self.waveTransitionTime/2, yBasis),
-								QtCore.QPointF(xBasis - self.waveTransitionTime/2, yBasis - self.waveHeight/2),
-								QtCore.QPointF(xBasis + self.waveTransitionTime/2, yBasis - self.waveHeight)]
+						pointList = [QtCore.QPointF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis),
+								QtCore.QPointF(xBasis - self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight/2),
+								QtCore.QPointF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight)]
 					else:
-						pointList = [QtCore.QPointF(xBasis + self.waveTransitionTime/2, yBasis),
-								QtCore.QPointF(xBasis, yBasis - self.waveHeight/2),
-								QtCore.QPointF(xBasis + self.waveTransitionTime/2, yBasis - self.waveHeight)]
+						pointList = [QtCore.QPointF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis),
+								QtCore.QPointF(xBasis - self.pendingTimeDelta, yBasis - self.waveHeight/2),
+								QtCore.QPointF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight)]
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 					if lastC == 'z':
 						#redo the angled lines only if last was D or X or z
-						self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2, yBasis, xBasis - self.waveTransitionTime/2, yBasis - self.waveHeight/2))
-						self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2, yBasis - self.waveHeight, xBasis - self.waveTransitionTime/2, yBasis - self.waveHeight/2))
+						self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis, 
+							xBasis - self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight/2))
+						self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight, 
+							xBasis - self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight/2))
 					else:
-						self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2, yBasis, xBasis, yBasis - self.waveHeight/2))
-						self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2, yBasis - self.waveHeight, xBasis, yBasis - self.waveHeight/2))
+						self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis, 
+							xBasis - self.pendingTimeDelta, yBasis - self.waveHeight/2))
+						self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight, 
+							xBasis - self.pendingTimeDelta, yBasis - self.waveHeight/2))
 
+				#horizontal lines
+				if waveCount != 0 and lastC in 'DXz':
+					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight, 
+						xBasis + self.waveTransitionTime/2, yBasis - self.waveHeight))
+					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis, 
+						xBasis + self.waveTransitionTime/2, yBasis))
 			else:
 				pointList = [QtCore.QPointF(a, b),
 							QtCore.QPointF(c - self.timeDelta, d),
@@ -1758,14 +1797,10 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				a = x1 - self.waveTransitionTime
 				c = x1
 				d = yBasis - self.waveHeight/2
-				pointList = [QtCore.QPointF(x0, y0),
-						QtCore.QPointF(x0 + self.waveTransitionTime, y0),
-						QtCore.QPointF(x1 + self.waveTransitionTime, y1),
-						QtCore.QPointF(x0 + self.waveTransitionTime, y1)]
-				pointList = [QtCore.QPointF(x1 - self.waveTransitionTime, yBasis),
-						QtCore.QPointF(x1, d),
-						QtCore.QPointF(x1 - self.waveTransitionTime, yBasis - self.waveHeight)]
-				if (thisC == 'D' and self.currentColor != 'w'):
+				pointList = [QtCore.QPointF(x1 - self.waveTransitionTime - self.timeDelta, yBasis),
+						QtCore.QPointF(x1 - self.timeDelta, d),
+						QtCore.QPointF(x1 - self.waveTransitionTime - self.timeDelta, yBasis - self.waveHeight)]
+				if (thisC == 'D' and self.currentColor != 'x'):
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 					#self.canvas.create_polygon(a - self.timeDelta, yBasis, c - self.timeDelta, d, a - self.timeDelta, yBasis - self.waveHeight, 
 					#	tags=('wave'+line), fill=colorMap[self.currentColor])
@@ -1785,7 +1820,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 							QtCore.QPointF(e - self.timeDelta, yBasis - self.waveHeight/2),
 							QtCore.QPointF(a - self.timeDelta, yBasis)]
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("light grey")))
-				elif self.currentColor != 'w':
+				elif self.currentColor != 'x':
 					pointList = [QtCore.QPointF(a, yBasis),
 							QtCore.QPointF(a, yBasis - self.waveHeight),
 							QtCore.QPointF(a - self.timeDelta, yBasis - self.waveHeight),
@@ -1793,14 +1828,14 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 							QtCore.QPointF(a - self.timeDelta, yBasis)]
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 			elif nextC in 'hfF':
-				#print ("thisC == 'X' or (thisC == 'D' and self.currentColor != 'w') === and === nextC in 'hfF'")
+				#print ("thisC == 'X' or (thisC == 'D' and self.currentColor != 'x') === and === nextC in 'hfF'")
 				a = x1 - self.waveTransitionTime
 				d = yBasis - self.waveHeight
 				pointList = [QtCore.QPointF(a, yBasis),
 						QtCore.QPointF(a - self.timeDelta, yBasis),
 						QtCore.QPointF(a - self.timeDelta, d),
 						QtCore.QPointF(x1 - self.timeDelta, d)]
-				if thisC == 'D' and self.currentColor != 'w':
+				if thisC == 'D' and self.currentColor != 'x':
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 				else:
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("light grey")))
@@ -1810,13 +1845,13 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				pointList = [QtCore.QPointF(a - self.timeDelta, yBasis - self.waveHeight),
 						QtCore.QPointF(a - self.timeDelta, d),
 						QtCore.QPointF(x1 - self.timeDelta, d)]
-				if thisC == 'D' and self.currentColor != 'w':
+				if thisC == 'D' and self.currentColor != 'x':
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 				else:
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("light grey")))
 		elif thisC == 'D':
 			if nextC in 'xXdD':
-				#print ("tdDrawDataDX: B. nextC in 'dxXD', self.currentColor = ", self.currentColor)
+				print ("tdDrawDataDX: B. nextC in 'dxXD', self.currentColor = ", self.currentColor)
 				a = x1 - self.waveTransitionTime/2
 				c = x1
 				f = yBasis - self.waveHeight
@@ -1829,8 +1864,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("light grey")))
 				#self.canvas.create_polygon(a - self.timeDelta, yBasis - self.waveHeight/2, c - self.timeDelta, yBasis, 
 				#							c, yBasis, c, yBasis - self.waveHeight, c - self.timeDelta, yBasis - self.waveHeight)
-				elif self.currentColor != 'w':
-					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("color")))
+				elif self.currentColor != 'x':
+					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 
 
 		if nextC == 'z':
@@ -1884,6 +1919,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 
 		#horizontal line at bottom
 		self.scene.addLine(QtCore.QLineF(x0, y0, x1 - self.timeDelta, y0))
+		self.pendingTimeDelta = self.timeDelta
+		print ("tdDrawDataDX: exiting... self.pendingTimeDelta=", self.pendingTimeDelta)
 
 	def tdDrawSpace(self, waveCount, cmd, basis=(0, 0)):
 		xBasis, yBasis = basis
@@ -1918,13 +1955,13 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		else:
 			c = x1 + self.waveTransitionTime
 
-		if nextC in 'xX' or (nextC in 'dD' and self.currentColor != 'w'):
+		if nextC in 'xX' or (nextC in 'dD' and self.currentColor != 'x'):
 			pointList = [QtCore.QPointF(x1 - self.timeDelta, y0),
 					QtCore.QPointF(c - self.timeDelta, yBasis),
 					QtCore.QPointF(c, yBasis),
 					QtCore.QPointF(c, yBasis - self.waveHeight),
 					QtCore.QPointF(c - self.timeDelta, yBasis - self.waveHeight)]
-			if nextC in 'dD' and self.currentColor != 'w':
+			if nextC in 'dD' and self.currentColor != 'x':
 				color = "light grey"
 				if self.currentColor in colorMap.keys():
 					color = colorMap[self.currentColor]
@@ -1934,20 +1971,23 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 
 		if nextC in 'dDXx':
 			self.scene.addLine(QtCore.QLineF(x1 - self.timeDelta, y0, 
-				x1 + self.waveTransitionTime - self.timeDelta, yBasis - self.waveHeight), self.triPen)
+				x1 + self.waveTransitionTime - self.timeDelta, yBasis - self.waveHeight))
 			self.scene.addLine(QtCore.QLineF(x1 - self.timeDelta, y0, 
-				x1 + self.waveTransitionTime - self.timeDelta, yBasis), self.triPen)
+				x1 + self.waveTransitionTime - self.timeDelta, yBasis))
 			self.scene.addLine(QtCore.QLineF(x1 + self.waveTransitionTime - self.timeDelta, yBasis - self.waveHeight, 
-				x1 + self.waveTransitionTime, yBasis - self.waveHeight), self.triPen)
+				x1 + self.waveTransitionTime, yBasis - self.waveHeight))
 			self.scene.addLine(QtCore.QLineF(x1 + self.waveTransitionTime - self.timeDelta, yBasis, 
-				x1 + self.waveTransitionTime, yBasis), self.triPen)
+				x1 + self.waveTransitionTime, yBasis))
 		elif nextC in 'hfF':
 			self.scene.addLine(QtCore.QLineF(x1 - self.timeDelta, y0, c, yBasis - self.waveHeight), self.triPen)
 		elif nextC in 'lrR' or nextC in 'pP':
 			self.scene.addLine(QtCore.QLineF(x1 - self.timeDelta, y0, c, yBasis), self.triPen)
 
-		self.scene.addLine(QtCore.QLineF(x0, y0, x1 - self.timeDelta, y1), self.triPen)
+		self.scene.addLine(QtCore.QLineF(x0 - self.pendingTimeDelta, y0, x1 - self.timeDelta, y1), self.triPen)
 	
+		self.pendingTimeDelta = self.timeDelta
+		print ("tdDrawTri: exiting... self.pendingTimeDelta=", self.pendingTimeDelta)
+
 	def tdDrawGap(self, waveCount, lastC=None, nextC=None, basis=(0, 0)):
 		xBasis, yBasis = basis
 		x0 = xBasis - self.waveHalfDuration - 5
