@@ -13,4 +13,4 @@ The usual disclaimer applies.
 ###    This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 Here is an example -- 
-![example](https://user-images.githubusercontent.com/16697108/211286069-c7f1187a-1d1c-460d-991a-49ca38501e45.jpg)
+![example](https://user-images.githubusercontent.com/16697108/212525828-bc71b67f-0e2d-4edb-8be5-6efb6b5e56d6.jpg)
