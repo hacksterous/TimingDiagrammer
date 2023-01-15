@@ -133,7 +133,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 
 		self.debugPenColor = "red"
 		self.debugPen = QtGui.QPen()
-		self.debugPen.setColor(QtGui.QColor(self.triPenColor))
+		self.debugPen.setColor(QtGui.QColor(self.debugPenColor))
 
 		self.gapBrushColor = "#eeeeee"
 		self.gapPen = QtGui.QPen()
@@ -164,8 +164,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.signalWaveYOffset = 90
 		self.signalWaveYSpacing = 35
 		self.arrowVertOffset = -self.waveHeight/2 - self.signalWaveYSpacing
-		self.textVertOffset = -self.waveHeight/2
 		self.arrowMarkAdjust = self.waveHeight
+		self.textVertOffset = -self.waveHeight/2
 		self.fontName = 'Sans'
 		self.fontSize = 10
 		self.editorIsModified = False
@@ -260,7 +260,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			attributeMap['font'] = self.fontName
 			attributeMap['size'] = self.fontSize
 			attributeMap['vert'] = 0
-			attributeMap['arrow'] = 0 #adjust self.arrowMarkAdjust
+			attributeMap['arrow'] = 0
 			attributeMap['center'] = True
 			if step == '':
 				attributeMapList.append(attributeMap)
@@ -468,7 +468,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					#for meta chars, don't reset since following chars will decide
 					#for DXz, the pendingTimeDelta will be used
 					self.pendingTimeDelta = 0
-					print ("B. thisC = ", thisC, " self.pendingTimeDelta reset to ", self.pendingTimeDelta)
+					#print ("B. thisC = ", thisC, " self.pendingTimeDelta reset to ", self.pendingTimeDelta)
 
 				if thisC == '|':
 					if waveCount > 0:
@@ -567,14 +567,10 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					self.label.setText("Error: Wrong code: " + thisC + ".")
 
 				cNum += 1
-				if line == 1:
-					topSpacing = self.waveHeight
-				else:
-					topSpacing = 0
 
 				# vertical line on the signal name
 				self.scene.addLine(QtCore.QLineF(self.signalWaveXOffset + self.sigNameColWidth, 
-					yBasis - topSpacing - self.signalWaveYSpacing, 
+					yBasis - self.signalWaveYSpacing - self.waveHeight, 
 					self.signalWaveXOffset + self.sigNameColWidth, 
 					yBasis + self.waveHeight))
 				
@@ -761,7 +757,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 
 	def closeEvent(self, event):
 		#self.fileExit()
-		print ("closeEvent: self.editorIsModified = ", self.editorIsModified)
+		#print ("closeEvent: self.editorIsModified = ", self.editorIsModified)
 		if self.editorIsModified == True:
 			qm = QMessageBox()
 			qm.setIcon(QMessageBox.Question)
@@ -1024,9 +1020,12 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		textTrimmed = text.lstrip()
 		numSpaces = len(text) - len(textTrimmed)
 		xWithSpaces = x + numSpaces * 3
+		qtext = self.scene.addText(textTrimmed, QtGui.QFont(font, fsize-1, QtGui.QFont.Light))
+		width, height = self.textWidthHeight(qtext)
+		#for background, we use a white rectangle bounded by a box for a smaller font size
+		self.scene.removeItem(qtext)
 		qtext = self.scene.addText(textTrimmed, QtGui.QFont(font, fsize, QtGui.QFont.Light))
 		qtext.setDefaultTextColor(QtGui.QColor(color))
-		width, height = self.textWidthHeight(qtext)
 		qtext.setTextWidth(wrapWidth)
 		qtext.setZValue(2)
 
@@ -1038,7 +1037,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			qtext.setPos(xWithSpaces - width/2, y - height/2)
 		else:
 			if fill == True:
-				r = self.scene.addRect(QtCore.QRectF(x, y - height/2, width, height), 
+				r = self.scene.addRect(QtCore.QRectF(xWithSpaces, y - height/2, width, height), 
 					QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("white")))
 				r.setZValue(1)
 			qtext.setPos(x, y - height/2)
@@ -1066,8 +1065,17 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 	def tdDrawHorizArrow(self, waveCount=-1, thisC=None, nextC=None, basis=(0, 0)):
 		xBasis, yBasis = basis
 		self.textVertOffset = -self.waveHeight
+		x0 = xBasis - self.waveTransitionTime - self.waveHalfDuration
 		y0 = yBasis + self.arrowVertOffset
+		#print ("tdDrawHorizArrow: waveCount = ", waveCount)
 		if thisC == '<':
+
+			if waveCount > 0:
+				#draw the grid
+				if (self.evenGridsEnabledGlobal == True and (waveCount % 2) == 0) or (self.oddGridsEnabledGlobal == True and (waveCount % 2) == 1):
+					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 +  + self.waveHalfDuration, yBasis - self.arrowMarkAdjust - self.signalWaveYSpacing, 
+						xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, yBasis + self.arrowVertOffset), self.gridPen)
+
 			a = xBasis + self.timeDelta
 			c = xBasis + self.waveHalfDuration + self.waveTransitionTime/2 + self.timeDelta
 			if waveCount != 0:
@@ -1085,7 +1093,13 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			self.pendingArrowDelay = self.timeDelta
 			self.timeDelta = 0
 		elif thisC == '-':
-			print ("saw - -- pendingArrowDelay = ", self.pendingArrowDelay, "timeDelta = ", self.timeDelta)
+			if waveCount > 0:
+				#draw the grid
+				if (self.evenGridsEnabledGlobal == True and (waveCount % 2) == 0) or (self.oddGridsEnabledGlobal == True and (waveCount % 2) == 1):
+					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 +  + self.waveHalfDuration, yBasis - self.arrowMarkAdjust - self.signalWaveYSpacing, 
+						xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, yBasis + self.arrowVertOffset), self.gridPen)
+
+			#print ("saw - -- pendingArrowDelay = ", self.pendingArrowDelay, "timeDelta = ", self.timeDelta)
 			a = xBasis - self.waveTransitionTime/2 + self.pendingArrowDelay
 			c = xBasis + self.waveHalfDuration + self.waveTransitionTime/2 + self.pendingArrowDelay + self.timeDelta
 			if waveCount == 0:
@@ -1095,7 +1109,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			self.pendingArrowDelay += self.timeDelta
 
 		elif thisC == '>':
-			print ("saw > -- pendingArrowDelay = ", self.pendingArrowDelay)
+			#print ("saw > -- pendingArrowDelay = ", self.pendingArrowDelay)
 			a = xBasis - self.waveTransitionTime/2 + self.pendingArrowDelay
 			y0 = yBasis + self.arrowVertOffset
 			
@@ -1127,7 +1141,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			#draw the grid
 			if self.evenGridsEnabledGlobal == True:
 				self.scene.addLine(QtCore.QLineF(x1 + self.waveTransitionTime/2 - self.timeDelta, 
-					yBasis - self.waveHeight - self.signalWaveYSpacing, 
+					yBasis - self.waveHeight - self.signalWaveYSpacing + 1,
 					x1 + self.waveTransitionTime/2 - self.timeDelta, 
 					yBasis), self.gridPen)
 
@@ -1706,7 +1720,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis, 
 						xBasis - self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight/2))
 					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight, 
-						xBasis - self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight/2), self.debugPen)
+						xBasis - self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight/2))
 				else:
 					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis, 
 						xBasis - self.pendingTimeDelta, yBasis - self.waveHeight/2))
@@ -1931,14 +1945,22 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 	def tdDrawSpace(self, waveCount, cmd, basis=(0, 0)):
 		xBasis, yBasis = basis
 		#draw the grid
+		x0 = xBasis + self.waveTransitionTime/2
 		if cmd.strip().find('<') == -1 and cmd.strip().find('>') == -1 and cmd.strip().find('-') == -1: #no arrow
 			#print ("-- seeing 's', this line has arrows ...")
-			x0 = xBasis + self.waveTransitionTime/2
 			if (self.evenGridsEnabledGlobal == True and (waveCount % 2) == 0) or (self.oddGridsEnabledGlobal == True and (waveCount % 2) == 1):
 				self.scene.addLine(QtCore.QLineF(x0 + self.waveHalfDuration,
 					yBasis - self.waveHeight - self.signalWaveYSpacing, 
 					x0 + self.waveHalfDuration,
 					yBasis), self.gridPen)
+		else:
+			if (self.evenGridsEnabledGlobal == True and (waveCount % 2) == 0) or (self.oddGridsEnabledGlobal == True and (waveCount % 2) == 1):
+				self.scene.addLine(QtCore.QLineF(x0 + self.waveHalfDuration,
+					#yBasis - self.waveHeight - self.arrowMarkAdjust - (self.signalWaveYSpacing - self.waveHeight), 
+					yBasis - self.arrowMarkAdjust - self.signalWaveYSpacing,
+					x0 + self.waveHalfDuration,
+					yBasis + self.arrowVertOffset + 1), self.gridPen)
+			
 
 	def tdDrawTri(self, waveCount, nextC=None, basis=(0, 0)):
 		xBasis, yBasis = basis
@@ -1992,7 +2014,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.scene.addLine(QtCore.QLineF(x0 - self.pendingTimeDelta, y0, x1 - self.timeDelta, y1), self.triPen)
 	
 		self.pendingTimeDelta = self.timeDelta
-		print ("tdDrawTri: exiting... self.pendingTimeDelta=", self.pendingTimeDelta)
+		#print ("tdDrawTri: exiting... self.pendingTimeDelta=", self.pendingTimeDelta)
 
 	def tdDrawGap(self, waveCount, lastC=None, nextC=None, basis=(0, 0)):
 		xBasis, yBasis = basis
