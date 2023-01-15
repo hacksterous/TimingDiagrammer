@@ -1478,7 +1478,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				pointList = [QtCore.QPointF(x1, yBasis - self.waveHeight), 
 							QtCore.QPointF(c, yBasis - self.waveHeight), 
 							QtCore.QPointF(c, yBasis)]
-				self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(), QtGui.QBrush(QtGui.QColor(color)))
+				self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 			if nextC in 'dxDX':
 				self.scene.addLine(QtCore.QLineF(x1, y0, x1 + self.waveTransitionTime, y0))
 			self.scene.addLine(QtCore.QLineF(x1, y0, x1 + self.waveTransitionTime, yBasis))
