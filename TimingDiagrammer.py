@@ -155,6 +155,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		#runtime variables
 		self.currentLineHasArrow = False
 		self.currentLineNumber = 0
+		self.yBasisRegistered = 0
 		self.timeDelta = 0
 		self.editorIsModified = False
 		self.pendingArrowDelay = 0
@@ -597,6 +598,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				xBasis = self.signalWaveXOffset + self.sigNameColWidth + self.waveHalfPeriod * waveCount
 				yBasis = self.signalWaveYOffset + (self.currentLineNumber - self.linesWithArrow) *\
 					(self.waveHeight + self.signalWaveYSpacing) + self.linesWithArrow * self.arrowLineAdjust
+				self.yBasisRegistered = yBasis
 
 				if thisC not in "DXz0123456789/<->dx":
 					#for meta chars, don't reset since following chars will decide
