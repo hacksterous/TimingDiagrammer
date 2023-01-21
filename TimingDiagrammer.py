@@ -1187,26 +1187,26 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			qtext.setTextWidth(wrapWidth)
 		elif wrapWidth != -1:
 			qtext.setTextWidth(self.waveHalfPeriod)
-		qtext.setZValue(2)
+		qtext.setZValue(3)
 		width, height = self.textWidthHeight(qtext)
 		height *= 0.55
 
 		if adjust == True:
 			xCurrent = x - width/2
-			yCurrent = y - height*0.9
+			yCurrent = y - height*0.5
 			if fill == True:
-				r = self.scene.addRect(QtCore.QRectF(xCurrent, yCurrent, width, height*0.8), 
+				r = self.scene.addRect(QtCore.QRectF(xCurrent, yCurrent, width, height*1.2), 
 					QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("white")))
-				r.setZValue(1)
+				r.setZValue(2)
 			qtext.setPos(x - width/2, y - height*0.9)
 			#print ("------------------- putText: xCurrent = ", xCurrent, " -- yCurrent = ", yCurrent)
 		else:
 			xCurrent = x
-			yCurrent = y - height*0.9
+			yCurrent = y - height*0.5
 			if fill == True:
-				r = self.scene.addRect(QtCore.QRectF(xCurrent, yCurrent, width, height*0.8), 
+				r = self.scene.addRect(QtCore.QRectF(xCurrent, yCurrent, width, height*1.2), 
 					QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("white")))
-				r.setZValue(1)
+				r.setZValue(2)
 			qtext.setPos(x, y - height*0.9)
 			#print ("------------------- putText: xCurrent = ", xCurrent, " -- yCurrent = ", yCurrent)
 
