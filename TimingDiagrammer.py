@@ -101,6 +101,7 @@ textColorMap = {
 
 class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagrammer):
 	def __init__(self, parent=None):
+		self.parent = parent
 		super(TimingDiagrammer, self).__init__(parent)
 		self.setupUi(self)
 		self.actionNew.triggered.connect(self.fileNew)
@@ -110,74 +111,23 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.actionExport.triggered.connect(self.fileExport)
 		self.actionExit.triggered.connect(self.fileExit)
 		self.actionSettings.triggered.connect(self.optionsSettings)
+		font = QtGui.QFont("Mono", 12, QtGui.QFont.Light)
+		self.plainTextEdit.document().setDefaultFont(font)
 		self.plainTextEdit.installEventFilter(self)
 
-		self.setAutoFillBackground(True)
+		#self.setAutoFillBackground(False)
 		self.scene = QGraphicsScene(self)
 		self.scene.setBackgroundBrush(Qt.white);
 
 		self.graphicsView.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 		self.graphicsView.setScene(self.scene)
 		#self.graphicsView.setRenderHints(QPainter.Antialiasing) # | QPainter.HighQualityAntialiasing)
-		self.xMargin = 30
-		self.yMargin = 50
-		self.scene.addLine(QtCore.QLineF(-self.xMargin, -self.yMargin, -self.xMargin-1, -self.yMargin-1), QtGui.QPen(Qt.transparent)) #to anchor to top left
 
-		self.gridPenColor = "#aaaaaa"
-		self.gridPen = QtGui.QPen(Qt.DotLine)
-		self.gridPen.setColor(QtGui.QColor(self.gridPenColor))
+		self.resetParameters()
+		self.resetVariables()
 
-		self.triPenColor = "olive"
-		self.triPen = QtGui.QPen()
-		self.triPen.setColor(QtGui.QColor(self.triPenColor))
-
-		self.debugPenColor = "red"
-		self.debugPen = QtGui.QPen()
-		self.debugPen.setColor(QtGui.QColor(self.debugPenColor))
-
-		self.gapBrushColor = "#eeeeee"
-		self.gapPen = QtGui.QPen()
-		self.gapPen.setColor(QtGui.QColor(self.gapBrushColor))
-		self.gapPen.setWidth(7)
-
-		self.riseClockArrow = False
-		self.fallClockArrow = False
-		self.droppedXCoord = -1
-		self.droppedYCoord = -1
-		self.parent = parent
-		self.currentLineNumber = 1
-		self.arrowSize = 9
-		self.arrowLineAdjust = 9
-		self.arrowTextAdjust = 46
-		self.currentLineHasArrow = False
-		self.waveHeight = 30
-		self.waveHalfDuration = 40
-		self.waveTransitionTime = 10
-		self.timeDelta = 0
-		self.waveHalfPeriod = self.waveHalfDuration + self.waveTransitionTime
-		self.sigNameColWidth = 50
-		self.sigNameFont = "Sans"
-		self.sigNameFontSize = 12
-		self.signalNameXOffset = 10
-		self.signalNameXSpacing = 50
-		self.signalWaveXOffset = 50
-		self.signalWaveYOffset = 90
-		self.signalWaveYSpacing = 35
-		self.arrowVertOffset = -self.waveHeight/2 - self.signalWaveYSpacing
-		self.arrowMarkAdjust = self.waveHeight
-		self.textVertOffset = -self.waveHeight/2
-		self.fontName = 'Sans'
-		self.fontSize = 10
-		self.editorIsModified = False
-		self.preferenceValuesList = []
-		self.evenGridsEnabledGlobal = True
-		self.oddGridsEnabledGlobal = True
-		self.pendingArrowDelay = 0
-		self.pendingDiscardModifierKey = False
-		self.pendingTimeDelta = 0
-		self.discardModalDialogChars = False
-		self.currentLineArrowLineList = []
-		self.currentLineArrowPolyList = []
+		#to anchor to top left
+		self.scene.addLine(QtCore.QLineF(-self.xMargin, -self.yMargin, -self.xMargin, -self.yMargin-1), QtGui.QPen(Qt.transparent)) 
 
 		self.currentDirName = "."
 		self.currentFileName = ''
@@ -191,14 +141,81 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.shortcutExit = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+Q'), self)
 		self.shortcutExit.activated.connect(self.fileExit)
 		self.plainTextEdit.setFocus()
+		self.plainTextEdit.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
 		self.setWindowTitle("Timing Diagrammer - Untitled")
-		print ("========== sys.argv = ", sys.argv)
+		#print ("========== sys.argv = ", sys.argv)
 		if len(sys.argv) > 1:
 			fileName = sys.argv[1]
+			self.currentDirName = os.path.dirname(fileName)
+			self.currentFileName = os.path.basename(fileName)
 			if os.path.isfile(fileName):
-				self.currentDirName = os.path.dirname(fileName)
-				self.currentFileName = os.path.basename(fileName)
 				self.fileReadBackend()
+
+	def resetVariables(self):
+		#runtime variables
+		self.currentLineHasArrow = False
+		self.currentLineNumber = 0
+		self.timeDelta = 0
+		self.editorIsModified = False
+		self.pendingArrowDelay = 0
+		self.pendingDiscardModifierKey = False
+		self.pendingTimeDelta = 0
+		self.discardModalDialogChars = False
+		self.currentLineArrowLineList = []
+		self.currentLineArrowPolyList = []
+		self.droppedXCoord = -1
+		self.droppedYCoord = -1
+		None
+
+	def resetParameters(self):
+		self.xMargin = 30
+		self.yMargin = 50
+		self.gridPenColor = "#aaaaaa"
+		self.gridPen = QtGui.QPen(Qt.DotLine)
+		self.gridPen.setColor(QtGui.QColor(self.gridPenColor))
+
+		self.triPenColor = "olive"
+		self.triPen = QtGui.QPen(Qt.DashLine)
+		self.triPen.setColor(QtGui.QColor(self.triPenColor))
+		self.triPen.setWidth(1)
+
+		self.debugPenColor = "red"
+		self.debugPen = QtGui.QPen()
+		self.debugPen.setColor(QtGui.QColor(self.debugPenColor))
+
+		self.hatchedGap = True
+		self.gapPenColor = "#333333"
+		self.gapPen = QtGui.QPen(Qt.DotLine)
+		self.gapPen.setColor(QtGui.QColor())
+		self.gapPen.setWidth(1)
+
+		self.gapBrushColor = "#eeeeee"
+		self.gapBrush = QtGui.QBrush(QtGui.QColor(self.gapBrushColor))
+		self.gapBrush.setStyle(Qt.BrushStyle(Qt.SolidPattern))
+
+		self.riseClockArrow = False
+		self.fallClockArrow = False
+		self.arrowSize = 9
+		self.waveHalfDuration = 40
+		self.waveTransitionTime = 10
+		self.waveHalfPeriod = self.waveHalfDuration + self.waveTransitionTime
+		self.sigNameColWidth = 50
+		self.sigNameFont = "Sans"
+		self.sigNameFontSize = 12
+		self.signalNameXOffset = 10
+		self.signalNameXSpacing = 50
+		self.signalWaveXOffset = 50
+		self.signalWaveYOffset = 90
+		self.waveHeight = 30
+		self.gapHeight = 30
+		self.signalWaveYSpacing = self.waveHeight
+		self.arrowVertOffset = -self.waveHeight/2 - self.signalWaveYSpacing
+		self.arrowLineAdjust = self.waveHeight/2
+		self.arrowLineEnds = 10
+		self.fontName = 'Sans'
+		self.fontSize = 10
+		self.evenGridsEnabledGlobal = True
+		self.oddGridsEnabledGlobal = True
 
 	def resolvednextC (self, cmd):
 		i = 0
@@ -244,18 +261,106 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.currentLineArrowPolyList.append(p)
 		p.setZValue(1)
 					
+	def parseFVData(self, annotSpec):
+		leftBrktPos = annotSpec.find('[')
+		rightBrktPos = annotSpec.find(']')
+		if rightBrktPos == -1:
+			spec = annotSpec[leftBrktPos + 1:]
+		else:
+			spec = annotSpec[leftBrktPos + 1: rightBrktPos]
 
-	def getfvLists(self, annotSpecCmd):
-		#print ("getfvLists: annotSpecCmd = ", annotSpecCmd)
+		delay = 0
+		width = -1
+		color = 'black'
+		font = self.fontName
+		size = self.fontSize
+		vert = 0
+		arrow = 0
+		center = True
+
+		if spec == '':
+			return (delay,
+					width,
+					color,
+					font,
+					size,
+			        vert,
+			        arrow,
+					center)
+
+		spec = spec.replace('  ', ' ')
+		spec = spec.replace(' =', '=')
+		for fvPair in spec.split(' '):
+			#print ("parseFVData: fvPair is ", fvPair)
+			if fvPair == '':
+				continue
+			fvPair = fvPair.replace(' ', '')
+			fvPair = fvPair.split('=')
+			if len(fvPair) < 2:
+				continue
+			field = fvPair[0]
+			value = fvPair[1]
+		
+			if field == "delay":
+				try:
+					delay = int(value)
+				except:
+					delay = 0
+			elif field == "width":
+				try:
+					width = int(value)
+				except:
+					width = -1
+			elif field == "color":
+				if value in textColorMap:
+					color = textColorMap[value]
+				else:
+					color = 'black'
+			elif field == "font":
+				if value in fontMap:
+					font = fontMap[value]
+				else:
+					font = self.fontName
+			elif field == "center":
+				center = value in "yY"
+			elif field == "size":
+				try:
+					size = int(value)
+					if size < 6:
+						size = 6
+				except:
+					size = self.fontSize
+			elif field == "vert":
+				try:
+					vert = int(value)
+				except:
+					vert = 0
+			elif field == "arrow":
+				try:
+					arrow = int(value)
+				except:
+					arrow = 0
+
+		return (delay,
+				width,
+				color,
+				font,
+				size,
+		        vert,
+		        arrow,
+				center)
+
+	def getFVData(self, annotSpecCmd):
+		#print ("getFVData: annotSpecCmd = ", annotSpecCmd)
 		attributeMapList = []
 		if annotSpecCmd == '':
-			#print ("getfvLists: null cmd4")
+			#print ("getFVData: null cmd4")
 			return attributeMapList
 		for step in annotSpecCmd.split(','):
 			#print ("step is ", step)
 			attributeMap = {}
 			attributeMap['delay'] = 0
-			attributeMap['width'] = 199
+			attributeMap['width'] = -1
 			attributeMap['color'] = 'black'
 			attributeMap['font'] = self.fontName
 			attributeMap['size'] = self.fontSize
@@ -284,17 +389,12 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 						value = int(value)
 					except:
 						value = 0
-					if value > 50:
-						value = 50
 					attributeMap['delay'] = int(value)
 				elif field == "width":
 					try:
 						value = int(value)
-						if value < 20:
-							value = 20
-						#print ("appended width = ", value)
 					except:
-						value = 199
+						value = -1
 					attributeMap['width'] = int(value)
 				elif field == "color":
 					if value in textColorMap:
@@ -340,38 +440,36 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			attributeMapList.append(attributeMap)
 	
 		#print ("===============================")
-		#print ("attributeMapList = ", attributeMapList)
+		#print ("len attributeMapList = ", len(attributeMapList))
 	
 		return attributeMapList
 
-	def doAnnotationCmd (self, cmd, annotSpecCmd):
-		attributeMapList = self.getfvLists(annotSpecCmd.strip())
-
-		if self.currentLineHasArrow == True:
-			self.textVertOffset = self.arrowVertOffset + self.arrowTextAdjust
-		else:
-			self.textVertOffset = -self.waveHeight/2
-
+	def doAnnotationCmd (self, cmd, annotSpecCmd, updateViewPort = False, charPosWithinCmd = -1):
+		attributeMapList = self.getFVData(annotSpecCmd.strip())
 		annotNum = 0
 		#print ("doAnnotationCmd: cmd = ", cmd)
+		#count number of commas in cmd before charPosWithinCmd
+		waveNum = -1
+		if charPosWithinCmd > 0:
+			waveNum = cmd[:charPosWithinCmd].count(',')
+
 		for annot in cmd.split(','):
 			annot = annot.replace(chr(1), '#')
 			annot = annot.replace(chr(2), ';')
 			annot = annot.replace(chr(6), ',')
-			#print ("doAnnotationCmd: annot = ", annot)
-			if len(attributeMapList) > 0:
-				delay = attributeMapList[0]['delay']
-				width = attributeMapList[0]['width']
-				color = attributeMapList[0]['color']
-				font = attributeMapList[0]['font']
-				size = attributeMapList[0]['size']
-				vert = attributeMapList[0]['vert']
-				arrow = attributeMapList[0]['arrow']
-				center = attributeMapList[0]['center']
-				attributeMapList = attributeMapList[1:]
+			#print ("doAnnotationCmd: annot = ", annot, " -- annotNum = ", annotNum)
+			if len(attributeMapList) > annotNum:
+				delay = attributeMapList[annotNum]['delay']
+				width = attributeMapList[annotNum]['width']
+				color = attributeMapList[annotNum]['color']
+				font = attributeMapList[annotNum]['font']
+				size = attributeMapList[annotNum]['size']
+				vert = attributeMapList[annotNum]['vert']
+				arrow = attributeMapList[annotNum]['arrow']
+				center = attributeMapList[annotNum]['center']
 			else:
 				delay = 0
-				width = 199
+				width = -1
 				color = 'black'
 				font = self.fontName
 				size = self.fontSize
@@ -383,39 +481,74 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			if annotNum == 0 and arrow != 0:
 				for l in self.currentLineArrowLineList:
 					l.setLine(l.line().x1(), l.line().y1() - arrow, l.line().x2(), l.line().y2() - arrow)
+					l.setZValue(1)
 				for p in self.currentLineArrowPolyList:
 					#print ("@@@@@ polygon = ", p, " arrow = ", arrow)
 					poly = p.polygon()
 					poly.translate(0, -arrow)
 					self.scene.removeItem(p)
-					self.scene.addPolygon(poly, QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("black")))
+					p = self.scene.addPolygon(poly, QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("black")))
+					p.setZValue(1)
 
 			#print ("@@@@#####@@@@ delay = ", delay, " width = ", width, " color = ", color, " vert = ", vert, " arrow = ", arrow, " -- annot is ", annot)
 			if annot != '':
-				#print ("annotNum = ", annotNum)
+				brktPos = annot.find('[')
+				if brktPos > 0:
+					#print ("doAnnotationCmd: brktPos > 0 for annot = ", annot)
+					(delay, 
+					width, 
+					color, 
+					font, 
+					size,
+					vert, 
+					arrow,
+					center) = self.parseFVData(annot[brktPos:])
 
-				self.putText(annot, self.sigNameColWidth + 
-					self.signalWaveXOffset + 
-					delay +
-					self.waveHalfPeriod * annotNum + (self.waveHalfPeriod/2 if center == True else 0),
-					self.signalWaveYOffset +
-					(self.currentLineNumber - self.linesWithArrow * self.arrowLineAdjust / 9) *
-						(self.waveHeight + self.signalWaveYSpacing) + self.linesWithArrow * 2 * self.arrowLineAdjust + self.textVertOffset - vert, center, 
-						font, size, color, width, self.currentLineHasArrow)
-						
+					#print (delay, 
+					#	width, 
+					#	color, 
+					#	font, 
+					#	size,
+					#	vert, 
+					#	arrow,
+					#	center)
+
+					annot = annot[:brktPos]
+
+			if annot != '':
+				updateViewPortLocal = updateViewPort and (annotNum == waveNum or annotNum == waveNum + 1)
+				#print ("annotNum = ", annotNum, " waveNum = ", waveNum)
+				if self.currentLineHasArrow == True:
+					self.putText(annot, self.sigNameColWidth + 
+						self.signalWaveXOffset + 
+						delay +
+						self.waveHalfPeriod * annotNum + (self.waveHalfPeriod/2 if center == True else 0),
+						self.yBasisRegistered + self.arrowVertOffset - 1 - vert,
+						center, font, size, color, width, True, updateViewPortLocal)
+				else:
+					self.putText(annot, self.sigNameColWidth + 
+						self.signalWaveXOffset + 
+						delay +
+						self.waveHalfPeriod * annotNum + (self.waveHalfPeriod/2 if center == True else 0),
+						self.signalWaveYOffset +
+							(self.currentLineNumber - self.linesWithArrow) * (self.waveHeight + self.signalWaveYSpacing) + 
+							self.linesWithArrow * self.arrowLineAdjust - self.waveHeight/2 - vert, 
+						center, font, size, color, width, False, updateViewPortLocal)
 			annotNum += 1
 
-	def processCommand (self, cmd, line, cmdNum, cmd4):
-		#print ("processCommand: cmdNum = ", cmdNum, "cmd = ", cmd, "cmd4 = ", cmd4)
+	def processCommand (self, cmd, line, cmdNum, cmd4, whichCommandHasCursor = 0, charPosWithinCmd = -1):
+		#if whichCommandHasCursor != 0:
+			#print ("processCommand: cmdNum = ", cmdNum, "cmd = ", cmd, "whichCommandHasCursor = ", whichCommandHasCursor, " --- cursorIsOnThisLine = ", cursorIsOnThisLine)
 		if cmdNum == 1:
 			#process signal name
 			#simplifies parsing multi-char tokens
 			cmd = cmd.replace(chr(2), ';')
 			cmd = cmd.replace(chr(6), ',')
 			cmd = cmd.replace(chr(1), '#')
-			self.tdDrawText(cmd)
-
+			self.tdDrawSigNamesText(cmd, whichCommandHasCursor == 1)
 		elif cmdNum == 2:
+			xCurrent = 0
+			yCurrent = 0
 			#process waves
 			self.currentLineArrowLineList = []
 			self.currentLineHasArrow = False
@@ -433,7 +566,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			#print ("-- seeing cmd = ", cmd, " linesWithArrow = ", self.linesWithArrow)
 			#print ("------------------------------")
 			for thisC in cmd:
-				#print ("processCmd-mainloop: thisC=", thisC, " ord lastC=", ord(lastC), lastC)
+				#print ("processCmd-mainloop: charPosWithinCmd=", charPosWithinCmd, " cNum=", cNum, " waveCount = ", waveCount)
+				#print ("processCmd-mainloop: thisC=", thisC, " ord(lastC) ... lastC=", ord(lastC), lastC)
 				if lastC == '$':
 					#print ("processCmd-mainloop: lastC was $")
 					cNum += 1
@@ -461,57 +595,59 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				#print ("processCmd-mainloop: nextC == ", nextC)
 				
 				xBasis = self.signalWaveXOffset + self.sigNameColWidth + self.waveHalfPeriod * waveCount
-				yBasis = self.signalWaveYOffset + (self.currentLineNumber - self.linesWithArrow * self.arrowLineAdjust / 9) *\
-					(self.waveHeight + self.signalWaveYSpacing) + self.linesWithArrow * 2 * self.arrowLineAdjust
+				yBasis = self.signalWaveYOffset + (self.currentLineNumber - self.linesWithArrow) *\
+					(self.waveHeight + self.signalWaveYSpacing) + self.linesWithArrow * self.arrowLineAdjust
 
-				if thisC not in "DXz0123456789/|<->d":
+				if thisC not in "DXz0123456789/<->dx":
 					#for meta chars, don't reset since following chars will decide
-					#for DXz, the pendingTimeDelta will be used
+					#for DXz, pendingTimeDelta will be used and pendingTimeDelta will be assigned from timeDelta at end of function
+					#for dx, pendingTimeDelta will be used and pendingTimeDelta will be set to 0 at the end of the function
 					self.pendingTimeDelta = 0
 					#print ("B. thisC = ", thisC, " self.pendingTimeDelta reset to ", self.pendingTimeDelta)
 
 				if thisC == '|':
-					if waveCount > 0:
-						x0 = xBasis
-						self.scene.addLine(QtCore.QLineF(x0 - self.waveTransitionTime/2 - self.timeDelta,
-							yBasis - self.waveHeight - self.arrowMarkAdjust,
-							x0 - self.waveTransitionTime/2 - self.timeDelta,
-							yBasis + self.arrowMarkAdjust/4))
+					if waveCount > 0 or self.timeDelta > 0:
+						#x0 = xBasis
+						#x0 = xBasis + self.waveHalfPeriod + self.timeDelta
+						x0 = xBasis + self.timeDelta
+						if waveCount != 0:
+							x0 -= self.waveTransitionTime/2
+						#print ("saw | -- X = ", x0, " -- waveCount = ", waveCount, " -- xBasis = ", xBasis, " -- self.timeDelta", self.timeDelta)
+						l = self.scene.addLine(QtCore.QLineF(x0,
+							yBasis - self.waveHeight - self.waveHeight,
+							x0,
+							yBasis + self.waveHeight/4))
+						l.setZValue(3) #topmost
+					self.timeDelta = 0
 				elif thisC in 'PpCcKkQq': #clock pulses
 					if thisC == "Q":
 						self.riseClockArrow = True
 						self.fallClockArrow = True
-						#self.tdDrawClock(waveCount, "P", nextC, (xBasis, yBasis))
-						self.tdDrawClock(waveCount, 'P', 'Pp'['CcKkQq'.find(nextC)%2], (xBasis, yBasis))
+						self.tdDrawClock(waveCount, lastC, 'P', 'Pp'['CcKkQq'.find(nextC)%2], (xBasis, yBasis))
 					elif thisC == "q":
 						self.riseClockArrow = True
 						self.fallClockArrow = True
-						#self.tdDrawClock(waveCount, 'p', nextC, (xBasis, yBasis))
-						self.tdDrawClock(waveCount, 'p', 'Pp'['CcKkQq'.find(nextC)%2], (xBasis, yBasis))
+						self.tdDrawClock(waveCount, lastC, 'p', 'Pp'['CcKkQq'.find(nextC)%2], (xBasis, yBasis))
 					elif thisC == "K":
 						self.riseClockArrow = False
 						self.fallClockArrow = True
-						#self.tdDrawClock(waveCount, 'P', nextC, (xBasis, yBasis))
-						self.tdDrawClock(waveCount, 'P', 'Pp'['CcKkQq'.find(nextC)%2], (xBasis, yBasis))
+						self.tdDrawClock(waveCount, lastC, 'P', 'Pp'['CcKkQq'.find(nextC)%2], (xBasis, yBasis))
 					elif thisC == "k":
 						self.riseClockArrow = False
 						self.fallClockArrow = True
-						#self.tdDrawClock(waveCount, 'p', nextC, (xBasis, yBasis))
-						self.tdDrawClock(waveCount, 'p', 'Pp'['CcKkQq'.find(nextC)%2], (xBasis, yBasis))
+						self.tdDrawClock(waveCount, lastC, 'p', 'Pp'['CcKkQq'.find(nextC)%2], (xBasis, yBasis))
 					elif thisC == "C":
 						self.riseClockArrow = True
 						self.fallClockArrow = False
-						#self.tdDrawClock(waveCount, 'P', nextC, (xBasis, yBasis))
-						self.tdDrawClock(waveCount, 'P', 'Pp'['CcKkQq'.find(nextC)%2], (xBasis, yBasis))
+						self.tdDrawClock(waveCount, lastC, 'P', 'Pp'['CcKkQq'.find(nextC)%2], (xBasis, yBasis))
 					elif thisC == "c":
 						self.riseClockArrow = True
 						self.fallClockArrow = False
-						#self.tdDrawClock(waveCount, 'p', nextC, (xBasis, yBasis))
-						self.tdDrawClock(waveCount, 'p', 'Pp'['CcKkQq'.find(nextC)%2], (xBasis, yBasis))
+						self.tdDrawClock(waveCount, lastC, 'p', 'Pp'['CcKkQq'.find(nextC)%2], (xBasis, yBasis))
 					else:
 						self.riseClockArrow = False
 						self.fallClockArrow = False
-						self.tdDrawClock(waveCount, thisC, nextC, (xBasis, yBasis))
+						self.tdDrawClock(waveCount, lastC, thisC, nextC, (xBasis, yBasis))
 					waveCount += 2
 					self.timeDelta = 0
 				elif thisC in 'rR': 
@@ -550,23 +686,20 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					self.tdDrawHorizArrow(waveCount, thisC, nextC, (xBasis, yBasis))
 					if thisC != '>':
 						waveCount += 1
+					self.timeDelta = 0
 				elif thisC in "0123456789":
 					#print (" -- additional delay = ", self.timeDelta)
 					#a number follows a command for additional delay
-					if self.currentLineHasArrow == True:
-						div = 8
+					if thisC == '0' and nextC in "|<->":
+						self.timeDelta = 10 * self.waveHalfDuration / 9
 					else:
-						div = 9
-					self.timeDelta = int(int(thisC) * self.waveHalfDuration / div)
+						self.timeDelta = int(thisC) * self.waveHalfDuration / 9
 					#print (" -- additional delay set to = ", self.timeDelta)
 				elif thisC == '/':
 					self.tdDrawGap(waveCount, lastC, nextC, (xBasis, yBasis))
-					self.timeDelta = 0
 				else:
 					#print ("Error: Wrong code: " + thisC + ".")
 					self.label.setText("Error: Wrong code: " + thisC + ".")
-
-				cNum += 1
 
 				# vertical line on the signal name
 				self.scene.addLine(QtCore.QLineF(self.signalWaveXOffset + self.sigNameColWidth, 
@@ -578,40 +711,48 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					#print ("char is NOT FWDSLASH -- thisC = ", thisC)
 					lastC = thisC
 
+				if whichCommandHasCursor == 2:
+					if charPosWithinCmd == cNum or charPosWithinCmd == cNum + 1:
+						xCurrent = xBasis
+						yCurrent = yBasis
+						#print ("==== snapshot xCurrent = ", xCurrent, "==== snapshot yCurrent = ", yCurrent)
+				cNum += 1
 			#for
+			if whichCommandHasCursor == 2 and xCurrent > 0:
+				self.graphicsView.ensureVisible(
+					xCurrent - self.xMargin, 
+					yCurrent - self.yMargin, 
+					xCurrent + self.xMargin,
+					yCurrent + self.yMargin)
 
 			#print ("-- cmdNum is 2 -- A seeing cmd = ", cmd, " self.currentLineHasArrow = ", self.currentLineHasArrow)
 			if self.currentLineHasArrow == True:
-				self.arrowVertOffset = -self.waveHeight/2 - self.signalWaveYSpacing
 				self.linesWithArrow += 1
 
 			self.timeDelta = 0
 					
 		elif cmdNum == 3:
 			#print ("-- B seeing cmd = ", cmd, "-- seeing cmd4 = ", cmd4, " self.currentLineHasArrow = ", self.currentLineHasArrow)
-			if self.currentLineHasArrow == True:
-				self.arrowVertOffset = -self.waveHeight/2 - self.signalWaveYSpacing
-			#	self.doAnnotationCmd (cmd, cmd4)
-			#else:
-			#	self.doAnnotationCmd (cmd, cmd4)
-			self.doAnnotationCmd (cmd, cmd4)
+			self.doAnnotationCmd (cmd, cmd4, whichCommandHasCursor == 3, charPosWithinCmd)
 			#print ("-- B self.linesWithArrow = ", self.linesWithArrow)
+		#print ("==============================================================================================")
 
 	def processDirective (self, data):
 		#print ("processDirective: data is ", data)
 		directiveList = data.strip().split()
 		if directiveList[0] == "grid":
 			#print ("----show grid directive found")
-			if directiveList[1] == "both":
-				#print ("------show grid both directive found")
-				self.evenGridsEnabledGlobal = True
-				self.oddGridsEnabledGlobal = True
-			elif directiveList[1] == "even":
-				self.evenGridsEnabledGlobal = True
-				self.oddGridsEnabledGlobal = False
-			elif directiveList[1] == "odd":
-				self.evenGridsEnabledGlobal = False
-				self.oddGridsEnabledGlobal = True
+			if len(directiveList) > 1:
+				if directiveList[1] == "both":
+					#print ("------show grid both directive found")
+					self.evenGridsEnabledGlobal = True
+					self.oddGridsEnabledGlobal = True
+				elif directiveList[1] == "odd":
+					self.evenGridsEnabledGlobal = True
+					self.oddGridsEnabledGlobal = False
+				elif directiveList[1] == "even":
+					self.evenGridsEnabledGlobal = False
+					self.oddGridsEnabledGlobal = True
 		else:
 			if len(directiveList) > 1:
 				try:
@@ -621,24 +762,12 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			else:
 				val2 = 0
 			#print ("val2 = ", val2)
-			if directiveList[0] == "arrtxtadj":
-				self.arrowTextAdjust = max (0, val2)
-				self.arrowTextAdjust = min (self.arrowTextAdjust, 46)
-			elif directiveList[0] == "arrlinadj":
-				self.arrowLineAdjust = max (0, val2)	
-				self.arrowLineAdjust = min (self.arrowLineAdjust, 9)	
-			elif directiveList[0] == "arradj":
-				self.arrowMarkAdjust = int(val2)
-				if self.arrowMarkAdjust < -self.waveHeight:
-					self.arrowMarkAdjust = -self.waveHeight
-				elif self.arrowMarkAdjust > self.waveHeight:
-					self.arrowMarkAdjust = self.waveHeight
-			elif val2 > 19 and directiveList[0] == "height":
+			if directiveList[0] == "height":
 				if val2 < 10:
 					self.waveHeight = 10
 				else:
 					self.waveHeight = val2
-				self.waveHeight = min (self.waveHeight, 50)	
+				self.arrowVertOffset = -self.waveHeight/2 - self.signalWaveYSpacing
 			elif val2 > 39 and directiveList[0] == "tick":
 				self.waveHalfPeriod = val2 / 2
 				self.waveHalfDuration = self.waveHalfPeriod - self.waveTransitionTime
@@ -683,75 +812,108 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					self.sigNameColWidth = 100
 
 
-	def drawWaves1Line (self, line, data):
+	def drawWaves1Line (self, line, data, cursorIsOnThisLine = False, currentColumn = -1):
 		self.pendingArrowDelay = 0
 		dataList = data.strip().split(';')
 		#print ("drawWaves1Line: dataList = ", dataList)
-		cmdNum = 0
+		cmdNum = 1
 		self.currentLineArrowLineList = []
 		self.currentLineArrowPolyList = []
+		commandBoundary = 0
+		lastCommandBoundary = 0
+		whichCommandHasCursor = 0
+		cmd1Len = 0
 		for cmd in dataList:
 			####if cmd.find('some text data') >= 0 or cmd.find('AOIR1') >= 0:
-			####	print ("====textVertOffset is ", self.textVertOffset)
 			#cmd = cmd.replace (chr(2), ';') #put back the ';' character
+			if cmdNum == 1:
+				cmd1Len = len(cmd)
 			cmd4 = ''
 			#print ("cmd is ", cmd, "line value passed is ", line, "cmdNum = ", cmdNum)
 			self.pendingTimeDelta = 0
-			if cmdNum == 0:
-				cmdNum = 1
-				self.currentLineNumber = line
+			self.currentLineNumber = line
 					
 			if cmdNum == 3 and len(dataList) == 4:
-				#for the annotation command, send the adjustment that follows in cmd4
+				#for the annotation command, send annot params in cmd4
 				cmd4 = dataList[3]
 			#print ("cmd4 is ", cmd4, "line value passed is ", line, "cmdNum = ", cmdNum)
-			self.processCommand(cmd, line, cmdNum, cmd4)
+			commandBoundary += len(cmd) + 1 #the semicolon is also counted
+			#print ("drawWaves1Line:  -- commandBoundary = ", commandBoundary)
+			if currentColumn < commandBoundary and cursorIsOnThisLine == True:
+				if whichCommandHasCursor == 0:
+					#only first match
+					whichCommandHasCursor = cmdNum
+
+			#if cursorIsOnThisLine == True:
+				#print ("drawWaves1Line: cmdNum = ", cmdNum)
+				#print ("drawWaves1Line: cursorIsOnThisLine is TRUE -- cmd = ", cmd, " len(cmd) = ", len(cmd))
+				#print ("drawWaves1Line: cursorIsOnThisLine is TRUE -- commandBoundary = ", commandBoundary, " cmd1Len = ", cmd1Len, " lastCommandBoundary = ", lastCommandBoundary)
+				#print ("drawWaves1Line: cursorIsOnThisLine is TRUE -- whichCommandHasCursor = ", whichCommandHasCursor, " currentColumn = ", currentColumn, " commandBoundary = ", commandBoundary)
+				#print ("drawWaves1Line: cursorIsOnThisLine is TRUE -- currentColumn - cmd1Len - 1 = ", currentColumn - cmd1Len - 1)
+				#print ("drawWaves1Line: cursorIsOnThisLine is TRUE -- currentColumn - lastCommandBoundary = ", currentColumn - lastCommandBoundary)
+			#self.processCommand(cmd, line, cmdNum, cmd4, whichCommandHasCursor, currentColumn - cmd1Len - 1) 
+			self.processCommand(cmd, line, cmdNum, cmd4, whichCommandHasCursor, currentColumn - lastCommandBoundary) 
 			cmdNum += 1
+			lastCommandBoundary = commandBoundary
+			if cmdNum > 3:
+				break
 
 	def reDrawCanvas (self, keyVal=''):
+		currentBlock, currentColumn = self.getTextCursorPos()
+		if currentColumn == 0:
+			#return was pressed and at start of new line
+			yCurrent = self.signalWaveYOffset + currentBlock * (self.waveHeight + self.signalWaveYSpacing)
+			self.graphicsView.ensureVisible(
+				-self.xMargin, 
+				yCurrent - self.yMargin, 
+				self.xMargin,
+				yCurrent + self.yMargin)
+			data = self.plainTextEdit.document().findBlockByNumber(currentBlock).text()
+			if data.strip() == '':
+				return
+
 		self.scene.clear()
+		for item in self.graphicsView.items():
+			self.graphicsView.removeItem(item)
 		self.linesWithArrow = 0
-		lastLine = self.plainTextEdit.document().lineCount()
+		lastBlock = self.plainTextEdit.document().blockCount()
 		dataArray = []
 		line = 0
-		for i in range (0, lastLine):
-			data = self.plainTextEdit.document().findBlockByLineNumber(i).text()
-			if i == lastLine - 1:
-				data += keyVal
-			data = data.replace('\#', chr(1)) #replace literal '#' before separating comments
-			data = data.replace('\;', chr(2)) #replace literal ';' before separating comments
-			data = data.replace('\,', chr(6)) #replace literal ','
+		for i in range (0, lastBlock):
+			data = self.plainTextEdit.document().findBlockByNumber(i).text()
+			if data.strip() == '':
+				continue
+			#if i == lastBlock - 1:
+			#	data += keyVal
 			if data.strip().find('#!') == 0:
 				if data[2:] != '':
 					self.processDirective(data[2:])
 					continue
-			dataList = data.split('#')
+			data = data.replace('\#', chr(1)) #replace literal '#' before separating comments
+			data = data.replace('\;', chr(2)) #replace literal ';' before separating comments
+			data = data.replace('\,', chr(6)) #replace literal ','
 			#print ("========DATALIST = ", dataList)
-			command = dataList[0].strip()
+			command = data.split('#')[0] #allow all leading and trailing spaces
 			#print ("==============command = ", command)
 			if command != '':
-				#print ("==============calling drawWaves1Line with data = ", data)
-				self.drawWaves1Line (line, data)
+				cursorIsOnThisLine = (currentBlock == i)
+				#print ("==============calling drawWaves1Line... currentBlock = ", currentBlock, " cursorIsOnThisLine = ", cursorIsOnThisLine, " i = ", i)
+				self.drawWaves1Line (line, command, cursorIsOnThisLine, currentColumn)
 				line += 1
 
-		self.label.setText("Status: Ready")
-		self.textVertOffset = -self.waveHeight/2
+		#anchor
+		rect = QtCore.QRectF(self.scene.itemsBoundingRect())
+		self.scene.setSceneRect(rect)
 
-		self.showViewPortAtTextCursor()
 
-	def showViewPortAtTextCursor(self):
-		#FIXME: move the scene location that was changed into the graphics viewport
-		y = self.plainTextEdit.textCursor().blockNumber() + 1;
-		#x = self.plainTextEdit.textCursor().columnNumber() + 1;
-
-		#print ("textCursor Y = ", y)
-		xCurrent = self.signalWaveXOffset + self.sigNameColWidth + self.waveHalfPeriod
-		yCurrent = self.signalWaveYOffset + (y - 1) * (self.waveHeight + self.signalWaveYSpacing)
-		#print ("xCurrent = ", xCurrent, " yCurrent = ", yCurrent)
-		self.graphicsView.ensureVisible(xCurrent, yCurrent, self.waveHalfPeriod, self.signalWaveYSpacing)
+	def getTextCursorPos(self):
+		qcursor = self.plainTextEdit.textCursor()
+		block = qcursor.blockNumber()
+		column = qcursor.columnNumber()
+		return block, column
 
 	def textChangedHandler(self, event=None):
-		print ("############## textChangedHandler ##############")
+		self.label.setText("Status: Ready")
 		self.plainTextEdit.ensureCursorVisible()
 		self.reDrawCanvas()
 
@@ -791,7 +953,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					return False
 				else:
 					if event.text() != '':
-						print ("eventFilter: event.text() = ", ord(event.text()), "  obj", obj)
+						#print ("eventFilter: event.text() = ", ord(event.text()), "  obj", obj)
 						if ord(event.text()) < 128:
 							if self.discardModalDialogChars == True:# and (ord(event.text()) == 13 or ord(event.text()) == 27):
 								#an enter or escape from fileSaveAs dialog can cause editorIsModified to be set to True
@@ -800,7 +962,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 							else:
 								self.editorIsModified = True
 								self.setWindowTitle("Timing Diagrammer - " + self.currentFileName + " [modified]")
-								print ("eventFilter: self.editorIsModified is set to True")
+								#print ("eventFilter: self.editorIsModified is set to True")
 		return False
 
 	def fileNew (self, event=None):
@@ -817,9 +979,10 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				print ("Buffer Save Dialog question returned = NO = ", ret)
 		self.scene.clear()
 		self.plainTextEdit.clear()
-		self.editorIsModified = False
+		self.resetParameters()
+		self.resetVariables()
 		self.currentFileName = '.tim'
-		print ("fileNew: self.editorIsModified is set to False = ", self.editorIsModified)
+		#print ("fileNew: self.editorIsModified is set to False = ", self.editorIsModified)
 		self.setWindowTitle("Timing Diagrammer - Untitled")
 
 	def fileOpen (self, event=None):
@@ -852,6 +1015,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			msg.exec_()
 			return
 
+		self.resetParameters()
+		self.resetVariables()
 		self.fileReadBackend()
 		self.discardModalDialogChars = True
 
@@ -886,7 +1051,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				f.write(self.plainTextEdit.toPlainText())
 				f.close()
 				self.editorIsModified = False
-				print ("writeCurrentFileBackend: self.editorIsModified = ", self.editorIsModified)
+				#print ("writeCurrentFileBackend: self.editorIsModified = ", self.editorIsModified)
 				self.setWindowTitle("Timing Diagrammer - " + self.currentFileName)
 			success = 1
 		except:
@@ -924,10 +1089,10 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 
 	def fileSave (self, event=None):
 		success = 0
-		if self.editorIsModified == False:
-			return -2 #no need of write
-		print ("fileSave: self.currentFileName = ", self.currentFileName)
-		if self.currentFileName != '' and self.currentFileName != '.tim':
+		if self.editorIsModified == False and os.path.isfile(self.currentFileName):
+			return -2 #no need of write when existing file is not modified
+		#print ("fileSave: self.currentFileName = ", self.currentFileName)
+		if self.currentFileName != '' and self.currentFileName != '.tim' or not os.path.isfile(self.currentFileName):
 			success = self.writeCurrentFile()
 		else:
 			success = self.fileSaveAs(None)
@@ -949,15 +1114,11 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		return success
 
 	def fileExport (self, event=None):
-		size = QtCore.QRectF(self.scene.sceneRect()).toRect().size()
-		x = size.width() + self.xMargin 
-		y = size.height() + self.yMargin
-	
-		#draw a marker at bottom right
-		self.scene.addLine(QtCore.QLineF(x, y, x+1, y+1)) #to anchor to bottom right
+		#size = QtCore.QRectF(self.scene.sceneRect()).toRect().size()
+		size = QtCore.QRectF(self.scene.itemsBoundingRect()).toRect().size()
+		#print ("fileExport: sceneRect width = ", size.width(), "sceneRect height = ", size.height())
 
-		size = QtCore.QRectF(self.scene.sceneRect()).toRect().size()
-		pixmap = QPixmap(size).scaled(size.width()*2, size.height()*2)
+		pixmap = QPixmap(size) 
 		pixmap.fill(QtGui.QColor("white"))
 		painter = QPainter(pixmap)
 		self.scene.render(painter)
@@ -1010,84 +1171,110 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		msg.exec_()
 
 	def textWidthHeight(self, qtext):
-		boundingRect = qtext.boundingRect().toRect().size()
-		#print ("boundingRect size = ", boundingRect)
-		width = boundingRect.width()
-		height = boundingRect.height()
+		boundingRectSize = qtext.boundingRect().toRect().size()
+		#print ("textWidthHeight: called from putText: qtext boundingRectSize = ", boundingRectSize)
+		width = boundingRectSize.width()
+		height = boundingRectSize.height()
 		return width, height
 
-	def putText(self, text, x, y, adjust=True, font="Sans", fsize=10, color="black", wrapWidth=199, fill=True):
-		textTrimmed = text.lstrip()
-		numSpaces = len(text) - len(textTrimmed)
-		xWithSpaces = x + numSpaces * 3
-		qtext = self.scene.addText(textTrimmed, QtGui.QFont(font, fsize-1, QtGui.QFont.Light))
-		width, height = self.textWidthHeight(qtext)
-		#for background, we use a white rectangle bounded by a box for a smaller font size
-		self.scene.removeItem(qtext)
-		qtext = self.scene.addText(textTrimmed, QtGui.QFont(font, fsize, QtGui.QFont.Light))
+	def putText(self, text, x, y, adjust=True, font="Sans", 
+			fsize=10, color="black", wrapWidth=-1, fill=True, updateViewPort = False):
+		qtext = self.scene.addText(text, QtGui.QFont(font, fsize, QtGui.QFont.Light))
 		qtext.setDefaultTextColor(QtGui.QColor(color))
-		qtext.setTextWidth(wrapWidth)
+		if wrapWidth < 10*self.waveHalfPeriod and wrapWidth != -1:
+			qtext.setTextWidth(wrapWidth)
+		elif wrapWidth != -1:
+			qtext.setTextWidth(self.waveHalfPeriod)
 		qtext.setZValue(2)
+		width, height = self.textWidthHeight(qtext)
+		height *= 0.55
 
 		if adjust == True:
+			xCurrent = x - width/2
+			yCurrent = y - height*0.9
 			if fill == True:
-				r = self.scene.addRect(QtCore.QRectF(xWithSpaces - width/2, y - height/2, width, height), 
+				r = self.scene.addRect(QtCore.QRectF(xCurrent, yCurrent, width, height*0.8), 
 					QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("white")))
 				r.setZValue(1)
-			qtext.setPos(xWithSpaces - width/2, y - height/2)
+			qtext.setPos(x - width/2, y - height*0.9)
+			#print ("------------------- putText: xCurrent = ", xCurrent, " -- yCurrent = ", yCurrent)
 		else:
+			xCurrent = x
+			yCurrent = y - height*0.9
 			if fill == True:
-				r = self.scene.addRect(QtCore.QRectF(xWithSpaces, y - height/2, width, height), 
+				r = self.scene.addRect(QtCore.QRectF(xCurrent, yCurrent, width, height*0.8), 
 					QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("white")))
 				r.setZValue(1)
-			qtext.setPos(x, y - height/2)
-		
-	def tdDrawText(self, text):
+			qtext.setPos(x, y - height*0.9)
+			#print ("------------------- putText: xCurrent = ", xCurrent, " -- yCurrent = ", yCurrent)
+
+		#anchor
+		self.scene.addLine(QtCore.QLineF(xCurrent + width + self.xMargin, 0,  xCurrent + width + self.xMargin, 1), QtGui.QPen(Qt.transparent)) 
+		if updateViewPort == True:
+			self.graphicsView.ensureVisible(
+				xCurrent - self.xMargin, 
+				yCurrent - self.yMargin, 
+				xCurrent + self.xMargin,
+				yCurrent + self.yMargin)
+				
+
+	def tdDrawSigNamesText(self, text, updateViewPort = False):
 		qtext = self.scene.addText(text)
-		boundingRect = qtext.boundingRect().toRect().size()
-		#print ("boundingRect size = ", boundingRect)
-		#fix alignment and anchor
-		width = boundingRect.width()
-		height = boundingRect.height()
+		boundingRectSize = qtext.boundingRect().toRect().size()
+		#print ("tdDrawSigNamesText: called from processCommand: qtext boundingRectSize = ", boundingRectSize)
+		width = boundingRectSize.width()
+		height = boundingRectSize.height()
 
 		x = self.signalNameXSpacing + self.sigNameColWidth
-		y = self.signalWaveYOffset + (self.currentLineNumber - self.linesWithArrow * self.arrowLineAdjust / 9) *\
-			(self.waveHeight + self.signalWaveYSpacing) + self.linesWithArrow * 2 * self.arrowLineAdjust
+		y = self.signalWaveYOffset + (self.currentLineNumber - self.linesWithArrow) *\
+			(self.waveHeight + self.signalWaveYSpacing) + self.linesWithArrow * self.arrowLineAdjust
 
-		qtext.setPos(x - width, y - self.waveHeight/2 - height/2)
+		xCurrent = x - width
+		yCurrent = y - self.waveHeight/2 - height/2
+		qtext.setPos(xCurrent, yCurrent)
 
-		if width > self.sigNameColWidth:
-			width -= self.sigNameColWidth
+		width = max(width, self.signalNameXSpacing + self.sigNameColWidth) - self.signalNameXSpacing - self.sigNameColWidth
 
-		#this is to ensure jpeg export with adequate margins
-		self.scene.addLine(QtCore.QLineF(-width, 0, -width-self.sigNameColWidth-1, 0), QtGui.QPen(Qt.transparent)) #to anchor to top left
+		#this anchor is to ensure jpeg export with adequate margins
+		self.scene.addLine(QtCore.QLineF(-(width + self.xMargin), 0, -(width + self.xMargin), 1), QtGui.QPen(Qt.transparent)) 
+		if updateViewPort == True:
+			pass
+			self.graphicsView.ensureVisible(
+				xCurrent - self.xMargin, 
+				yCurrent - self.yMargin, 
+				xCurrent + self.xMargin,
+				yCurrent + self.yMargin)
 
 	def tdDrawHorizArrow(self, waveCount=-1, thisC=None, nextC=None, basis=(0, 0)):
 		xBasis, yBasis = basis
-		self.textVertOffset = -self.waveHeight
-		x0 = xBasis - self.waveTransitionTime - self.waveHalfDuration
-		y0 = yBasis + self.arrowVertOffset
 		#print ("tdDrawHorizArrow: waveCount = ", waveCount)
 		if thisC == '<':
-
 			if waveCount > 0:
 				#draw the grid
 				if (self.evenGridsEnabledGlobal == True and (waveCount % 2) == 0) or (self.oddGridsEnabledGlobal == True and (waveCount % 2) == 1):
-					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 +  + self.waveHalfDuration, yBasis - self.arrowMarkAdjust - self.signalWaveYSpacing, 
-						xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, yBasis + self.arrowVertOffset), self.gridPen)
+					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, 
+						yBasis - self.waveHeight - self.signalWaveYSpacing, 
+						xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, 
+						yBasis + self.arrowVertOffset), self.gridPen)
 
 			a = xBasis + self.timeDelta
 			c = xBasis + self.waveHalfDuration + self.waveTransitionTime/2 + self.timeDelta
 			if waveCount != 0:
 				a -= self.waveTransitionTime/2
-			self.tdDrawArrowHead((a, y0), 'L')
-			l = self.scene.addLine(QtCore.QLineF(a, y0, c, y0))
+			self.tdDrawArrowHead((a, yBasis + self.arrowVertOffset), 'L')
+			l = self.scene.addLine(QtCore.QLineF(a, yBasis + self.arrowVertOffset, 
+									c, yBasis + self.arrowVertOffset))
+			#print ("2. self.currentLineNumber = ", self.currentLineNumber)
+			#print ("2. self.linesWithArrow = ", self.linesWithArrow)
+			#print ("2. yBasis = ", yBasis)
+			#print ("2. offs = ", yBasis + self.arrowVertOffset)
 			self.currentLineArrowLineList.append(l)
 			l.setZValue(1)
 
+			#print ("saw < -- X = ", a, " -- waveCount = ", waveCount, " -- xBasis = ", xBasis, " -- self.timeDelta", self.timeDelta)
 			l = self.scene.addLine(QtCore.QLineF(a,
-				yBasis - self.waveHeight - self.arrowMarkAdjust,
-				a, y0 + self.arrowMarkAdjust/4))
+				yBasis + self.arrowVertOffset - self.arrowLineEnds,
+				a, yBasis + self.arrowVertOffset + self.arrowLineEnds))
 			self.currentLineArrowLineList.append(l)
 			l.setZValue(1)
 			self.pendingArrowDelay = self.timeDelta
@@ -1096,7 +1283,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			if waveCount > 0:
 				#draw the grid
 				if (self.evenGridsEnabledGlobal == True and (waveCount % 2) == 0) or (self.oddGridsEnabledGlobal == True and (waveCount % 2) == 1):
-					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 +  + self.waveHalfDuration, yBasis - self.arrowMarkAdjust - self.signalWaveYSpacing, 
+					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, yBasis - self.waveHeight - self.signalWaveYSpacing, 
 						xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, yBasis + self.arrowVertOffset), self.gridPen)
 
 			#print ("saw - -- pendingArrowDelay = ", self.pendingArrowDelay, "timeDelta = ", self.timeDelta)
@@ -1104,35 +1291,37 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			c = xBasis + self.waveHalfDuration + self.waveTransitionTime/2 + self.pendingArrowDelay + self.timeDelta
 			if waveCount == 0:
 				a = xBasis + self.timeDelta
-			l = self.scene.addLine(QtCore.QLineF(a, y0, c, y0))
+			l = self.scene.addLine(QtCore.QLineF(a, yBasis + self.arrowVertOffset, c, yBasis + self.arrowVertOffset))
 			self.currentLineArrowLineList.append(l)
+			l.setZValue(1)
 			self.pendingArrowDelay += self.timeDelta
+			self.timeDelta = 0
 
 		elif thisC == '>':
-			#print ("saw > -- pendingArrowDelay = ", self.pendingArrowDelay)
 			a = xBasis - self.waveTransitionTime/2 + self.pendingArrowDelay
-			y0 = yBasis + self.arrowVertOffset
+			#print ("saw > -- X = ", a, " -- xBasis = ", xBasis, " -- self.timeDelta", self.timeDelta)
 			
-			self.tdDrawArrowHead((a, y0), 'R')
+			self.tdDrawArrowHead((a, yBasis + self.arrowVertOffset), 'R')
 
-			l = self.scene.addLine(QtCore.QLineF(a, yBasis - self.waveHeight - self.arrowMarkAdjust,
-				a, y0 + self.arrowMarkAdjust/4))
+			l = self.scene.addLine(QtCore.QLineF(a, yBasis + self.arrowVertOffset - self.arrowLineEnds,
+				a, yBasis + self.arrowVertOffset + self.arrowLineEnds))
 			self.currentLineArrowLineList.append(l)
+			l.setZValue(1)
 
 			self.timeDelta = 0
 			self.pendingArrowDelay = 0
 
 		self.currentLineHasArrow = True
 
-	def tdDrawClock(self, waveCount=-1, thisC=None, nextC=None, basis=(0, 0)):
+	def tdDrawClock(self, waveCount=-1, lastC=None, thisC=None, nextC=None, basis=(0, 0)):
 		xBasis, yBasis = basis
+		x0 = xBasis
 		if thisC == 'P': #upper case
 			#print ("Doing P -- at the beginning seeing timeDelata =", self.timeDelta)
 			#print ("self.riseClockArrow = ", self.riseClockArrow, " self.fallClockArrow = ", self.fallClockArrow)
-			x0 = xBasis
 			x1 = x0 + self.waveHalfDuration + self.timeDelta
-			if waveCount == 0:
-				x0 += self.waveTransitionTime/2 #tweak to match the start time of non-clock signals
+			if waveCount == 0 or lastC == 'z':
+				x0 += self.waveTransitionTime/2 #tweak to match the start time of non-clock signals or previous tristate signal
 			y0 = yBasis
 			y1 = yBasis
 
@@ -1236,10 +1425,9 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 
 		elif thisC == 'p': #lower case
 			#print ("Doing small p -- at the beginning seeing timeDelta =", self.timeDelta)
-			x0 = xBasis
 			x1 = x0 + self.waveHalfDuration + self.waveTransitionTime/2 + self.timeDelta
-			if waveCount == 0: #first clock
-				x0 += self.waveTransitionTime/2 #tweak to match the start time of non-clock signals
+			if waveCount == 0 or lastC == 'z':
+				x0 += self.waveTransitionTime/2 #tweak to match the start time of non-clock signals or previous tristate signal
 			y0 = yBasis
 			y1 = yBasis
 			self.scene.addLine(QtCore.QLineF(x0, y0, x1, y1))
@@ -1341,7 +1529,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 							QtCore.QPointF(c, yBasis - self.waveHeight), 
 							QtCore.QPointF(c, yBasis), 
 							QtCore.QPointF(c - self.timeDelta, yBasis)]
-				self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(), QtGui.QBrush(QtGui.QColor(color)))
+				self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 				#self.canvas.create_polygon(x1, yBasis - self.waveHeight, c, yBasis - self.waveHeight, c, yBasis, 
 				#	c - self.timeDelta, yBasis)
 
@@ -1517,7 +1705,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				pointList = [QtCore.QPointF(x1, yBasis), 
 							QtCore.QPointF(c, yBasis), 
 							QtCore.QPointF(c, yBasis - self.waveHeight)]
-				self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(), QtGui.QBrush(QtGui.QColor(color)))
+				self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 
 			if nextC in 'dxDX':
 				self.scene.addLine(QtCore.QLineF(x1, yBasis, x1 + self.waveTransitionTime, yBasis))
@@ -1531,8 +1719,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				x0 + self.waveHalfDuration, yBasis), self.gridPen)
 
 	def tdDrawDatadx(self, waveCount=-1, lastC=None, thisC=None, nextC=None, basis=(0, 0)):
-		print ("tdDrawDatadx: thisC=", thisC, " nextC=", nextC, " lastC=", lastC)
-		print ("tdDrawDatadx: self.currentColor=", self.currentColor, " self.pendingTimeDelta=", self.pendingTimeDelta, " lastC=", lastC)
+		#print ("tdDrawDatadx: thisC=", thisC, " nextC=", nextC, " lastC=", lastC)
+		#print ("tdDrawDatadx: self.currentColor=", self.currentColor, " self.pendingTimeDelta=", self.pendingTimeDelta, " lastC=", lastC)
 		xBasis, yBasis = basis
 		color = "light grey"
 		if self.currentColor in colorMap.keys():
@@ -1638,9 +1826,6 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 									QtCore.QPointF(x1 + self.waveTransitionTime, yBasis),
 									QtCore.QPointF(x1 + self.waveTransitionTime, yBasis - self.waveHeight)]
 						self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("light grey")))
-						#self.canvas.create_polygon(x1 + self.waveTransitionTime/2, yBasis - self.waveHeight/2, 
-						#							x1 + self.waveTransitionTime, yBasis, 
-						#							x1 + self.waveTransitionTime, yBasis - self.waveHeight)
 						self.scene.addLine(QtCore.QLineF(x1, yBasis, x1 + self.waveTransitionTime, yBasis - self.waveHeight))
 						self.scene.addLine(QtCore.QLineF(x1, yBasis - self.waveHeight, x1 + self.waveTransitionTime, yBasis))
 				else:
@@ -1696,10 +1881,10 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 
 		y0 = yBasis
 		y1 = y0
-		self.scene.addLine(QtCore.QLineF(x0, y0, x1, y1))
+		self.scene.addLine(QtCore.QLineF(x0 - self.pendingTimeDelta, y0, x1, y1))
 		y0 = yBasis - self.waveHeight
 		y1 = y0
-		self.scene.addLine(QtCore.QLineF(x0, y0, x1, y1))
+		self.scene.addLine(QtCore.QLineF(x0 - self.pendingTimeDelta, y0, x1, y1))
 
 		if nextC in 'pP':
 			self.scene.addLine(QtCore.QLineF(x1, yBasis, x1 + self.waveTransitionTime, yBasis))
@@ -1732,8 +1917,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.pendingTimeDelta = 0
 
 	def tdDrawDataDX(self, waveCount=-1, lastC=None, thisC=None, nextC=None, basis=(0, 0)):
-		print ("tdDrawDataDX: thisC=", thisC, " ord nextC=", ord(nextC), nextC, " lastC=", lastC)
-		print ("tdDrawDataDX: at start, self.pendingTimeDelta=", self.pendingTimeDelta)
+		#print ("tdDrawDataDX: thisC=", thisC, " ord nextC=", ord(nextC), nextC, " lastC=", lastC)
+		#print ("tdDrawDataDX: at start, self.pendingTimeDelta=", self.pendingTimeDelta)
 		xBasis, yBasis = basis
 		x0 = xBasis + self.waveTransitionTime/2
 		x1 = x0 + self.waveHalfDuration
@@ -1765,7 +1950,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		#print ("tdDrawDataDX: 0. thisC == 'D' and self.currentColor = ", self.currentColor)
 		if thisC == 'X' or (thisC == 'D' and self.currentColor != 'x'):
 			if (thisC == 'D' and self.currentColor != 'x'):
-				print ("tdDrawDataDX: 1. thisC == 'D' and self.currentColor != 'x'")
+				#print ("tdDrawDataDX: 1. thisC == 'D' and self.currentColor != 'x'")
 				pointList = [QtCore.QPointF(a - self.pendingTimeDelta, b),
 							QtCore.QPointF(c - self.timeDelta, d),
 							QtCore.QPointF(e - self.timeDelta, y1 + self.waveHeight/2),
@@ -1773,7 +1958,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 							QtCore.QPointF(i - self.pendingTimeDelta, j)]
 				self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 				if waveCount != 0 and lastC in 'DXzx':
-					print ("tdDrawDataDX: 1. waveCount != 0 and lastC in 'DXzx'")
+					#print ("tdDrawDataDX: 1. waveCount != 0 and lastC in 'DXzx'")
 					#FIX PR0
 					# to handle cases like: D$rD - when the first D is seen, the color is not yet known, so the
 					#left triangle for the next D cannot be filled - it must be deferred when the next D is being
@@ -1851,8 +2036,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				#print ("thisC == 'X' or (thisC == 'D' and self.currentColor != 'x') === and === nextC in 'hfF'")
 				a = x1 - self.waveTransitionTime
 				d = yBasis - self.waveHeight
-				pointList = [QtCore.QPointF(a, yBasis),
-						QtCore.QPointF(a - self.timeDelta, yBasis),
+				pointList = [QtCore.QPointF(a - self.timeDelta, yBasis),
 						QtCore.QPointF(a - self.timeDelta, d),
 						QtCore.QPointF(x1 - self.timeDelta, d)]
 				if thisC == 'D' and self.currentColor != 'x':
@@ -1871,7 +2055,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("light grey")))
 		elif thisC == 'D':
 			if nextC in 'xXdD':
-				print ("tdDrawDataDX: B. nextC in 'dxXD', self.currentColor = ", self.currentColor)
+				#print ("tdDrawDataDX: B. nextC in 'dxXD', self.currentColor = ", self.currentColor)
 				a = x1 - self.waveTransitionTime/2
 				c = x1
 				f = yBasis - self.waveHeight
@@ -1882,8 +2066,6 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 						QtCore.QPointF(c - self.timeDelta, yBasis - self.waveHeight)]
 				if nextC in 'xX':
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("light grey")))
-				#self.canvas.create_polygon(a - self.timeDelta, yBasis - self.waveHeight/2, c - self.timeDelta, yBasis, 
-				#							c, yBasis, c, yBasis - self.waveHeight, c - self.timeDelta, yBasis - self.waveHeight)
 				elif self.currentColor != 'x':
 					self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 
@@ -1940,7 +2122,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		#horizontal line at bottom
 		self.scene.addLine(QtCore.QLineF(x0, y0, x1 - self.timeDelta, y0))
 		self.pendingTimeDelta = self.timeDelta
-		print ("tdDrawDataDX: exiting... self.pendingTimeDelta=", self.pendingTimeDelta)
+		#print ("tdDrawDataDX: exiting... self.pendingTimeDelta=", self.pendingTimeDelta)
 
 	def tdDrawSpace(self, waveCount, cmd, basis=(0, 0)):
 		xBasis, yBasis = basis
@@ -1956,8 +2138,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		else:
 			if (self.evenGridsEnabledGlobal == True and (waveCount % 2) == 0) or (self.oddGridsEnabledGlobal == True and (waveCount % 2) == 1):
 				self.scene.addLine(QtCore.QLineF(x0 + self.waveHalfDuration,
-					#yBasis - self.waveHeight - self.arrowMarkAdjust - (self.signalWaveYSpacing - self.waveHeight), 
-					yBasis - self.arrowMarkAdjust - self.signalWaveYSpacing,
+					yBasis - self.waveHeight - self.signalWaveYSpacing,
 					x0 + self.waveHalfDuration,
 					yBasis + self.arrowVertOffset + 1), self.gridPen)
 			
@@ -1978,10 +2159,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			self.scene.addLine(QtCore.QLineF(x0 + self.waveHalfDuration, yBasis - self.waveHeight - self.signalWaveYSpacing, 
 				x0 + self.waveHalfDuration, yBasis), self.gridPen)
 
-		if nextC in 'pP':
-			c = x1 + self.waveTransitionTime/2
-		else:
-			c = x1 + self.waveTransitionTime
+		c = x1 + self.waveTransitionTime
 
 		if nextC in 'xX' or (nextC in 'dD' and self.currentColor != 'x'):
 			pointList = [QtCore.QPointF(x1 - self.timeDelta, y0),
@@ -2006,12 +2184,17 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				x1 + self.waveTransitionTime, yBasis - self.waveHeight))
 			self.scene.addLine(QtCore.QLineF(x1 + self.waveTransitionTime - self.timeDelta, yBasis, 
 				x1 + self.waveTransitionTime, yBasis))
+			self.scene.addLine(QtCore.QLineF(x0 - self.pendingTimeDelta, y0, x1 - self.timeDelta, y1))
 		elif nextC in 'hfF':
-			self.scene.addLine(QtCore.QLineF(x1 - self.timeDelta, y0, c, yBasis - self.waveHeight), self.triPen)
-		elif nextC in 'lrR' or nextC in 'pP':
-			self.scene.addLine(QtCore.QLineF(x1 - self.timeDelta, y0, c, yBasis), self.triPen)
-
-		self.scene.addLine(QtCore.QLineF(x0 - self.pendingTimeDelta, y0, x1 - self.timeDelta, y1), self.triPen)
+			self.scene.addLine(QtCore.QLineF(x0, y0, c - self.waveTransitionTime - self.timeDelta, y0), self.triPen) 
+			self.scene.addLine(QtCore.QLineF(x0 + self.waveHalfDuration - self.timeDelta, y0, c - self.timeDelta, yBasis - self.waveHeight))
+			self.scene.addLine(QtCore.QLineF(c - self.timeDelta, yBasis - self.waveHeight, x1 + self.waveTransitionTime, yBasis - self.waveHeight))
+		elif nextC in 'lrRpP':
+			self.scene.addLine(QtCore.QLineF(x0, y0, c - self.waveTransitionTime - self.timeDelta, y0), self.triPen)
+			self.scene.addLine(QtCore.QLineF(x0 + self.waveHalfDuration - self.timeDelta, y0, c - self.timeDelta, yBasis))
+			self.scene.addLine(QtCore.QLineF(c - self.timeDelta, yBasis, x1 + self.waveTransitionTime, yBasis))
+		else:
+			self.scene.addLine(QtCore.QLineF(x0, y0, c - self.waveTransitionTime, y0), self.triPen)
 	
 		self.pendingTimeDelta = self.timeDelta
 		#print ("tdDrawTri: exiting... self.pendingTimeDelta=", self.pendingTimeDelta)
@@ -2019,37 +2202,48 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 	def tdDrawGap(self, waveCount, lastC=None, nextC=None, basis=(0, 0)):
 		xBasis, yBasis = basis
 		x0 = xBasis - self.waveHalfDuration - 5
-		color = self.gapBrushColor
 		xstep = -5
 		xstep2 = 7
 
-		pointList = [QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep, yBasis - self.waveHeight - self.signalWaveYSpacing/4),
-			QtCore.QPointF(x0 + self.waveHalfDuration/2 + 7 + xstep, yBasis - 3*self.waveHeight/4),
-			QtCore.QPointF(x0 + self.waveHalfDuration/2 - 7 + xstep, yBasis - self.waveHeight/4),
+		pointList = [QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep, yBasis - self.gapHeight - self.signalWaveYSpacing/4),
+			QtCore.QPointF(x0 + self.waveHalfDuration/2 + 7 + xstep, yBasis - 3*self.gapHeight/4),
+			QtCore.QPointF(x0 + self.waveHalfDuration/2 - 7 + xstep, yBasis - self.gapHeight/4),
 			QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep, yBasis + self.signalWaveYSpacing/4),
 
 			QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep2, yBasis + self.signalWaveYSpacing/4),
-			QtCore.QPointF(x0 + self.waveHalfDuration/2 - 7 + xstep2, yBasis - self.waveHeight/4),
-			QtCore.QPointF(x0 + self.waveHalfDuration/2 + 7 + xstep2, yBasis - 3*self.waveHeight/4),
-			QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep2, yBasis - self.waveHeight - self.signalWaveYSpacing/4)]
+			QtCore.QPointF(x0 + self.waveHalfDuration/2 - 7 + xstep2, yBasis - self.gapHeight/4),
+			QtCore.QPointF(x0 + self.waveHalfDuration/2 + 7 + xstep2, yBasis - 3*self.gapHeight/4),
+			QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep2, yBasis - self.gapHeight - self.signalWaveYSpacing/4)]
 
 		self.scene.addPolygon(QtGui.QPolygonF(pointList), 
-			QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
+			QtGui.QPen(Qt.transparent), self.gapBrush)
 
 		path = QPainterPath()
-		path.moveTo(QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep, yBasis - self.waveHeight - self.signalWaveYSpacing/4))
+		path.moveTo(QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep, yBasis - self.gapHeight - self.signalWaveYSpacing/4))
 		path.cubicTo(
-					QtCore.QPointF(x0 + self.waveHalfDuration/2 + 25 + xstep, yBasis - 3*self.waveHeight/4),
-					QtCore.QPointF(x0 + self.waveHalfDuration/2 - 23 + xstep, yBasis - self.waveHeight/4),
+					QtCore.QPointF(x0 + self.waveHalfDuration/2 + 25 + xstep, yBasis - 3*self.gapHeight/4),
+					QtCore.QPointF(x0 + self.waveHalfDuration/2 - 23 + xstep, yBasis - self.gapHeight/4),
 					QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep, yBasis + self.signalWaveYSpacing/4))
 		self.scene.addPath(path, self.gapPen)
-		path.moveTo(QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep2, yBasis - self.waveHeight - self.signalWaveYSpacing/4))
-		path.cubicTo(
-					QtCore.QPointF(x0 + self.waveHalfDuration/2 + 35 + xstep, yBasis - 3*self.waveHeight/4),
-					QtCore.QPointF(x0 + self.waveHalfDuration/2 - 15 + xstep, yBasis - self.waveHeight/4),
-					QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep2, yBasis + self.signalWaveYSpacing/4))
-		self.scene.addPath(path, self.gapPen)
-		self.scene.addPath(path, self.gapPen)
+
+		if self.hatchedGap == False:
+			self.gapPen.setWidth(7)
+			self.gapPen = QtGui.QPen(Qt.SolidLine)
+			path.moveTo(QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep2, yBasis - self.gapHeight - self.signalWaveYSpacing/4))
+			path.cubicTo(
+						QtCore.QPointF(x0 + self.waveHalfDuration/2 + 35 + xstep, yBasis - 3*self.gapHeight/4),
+						QtCore.QPointF(x0 + self.waveHalfDuration/2 - 15 + xstep, yBasis - self.gapHeight/4),
+						QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep2, yBasis + self.signalWaveYSpacing/4))
+			self.scene.addPath(path, self.gapPen)
+		else:
+			self.gapPen.setWidth(1)
+			for i in range (0, xstep2-xstep, 2):
+				path.moveTo(QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep+i, yBasis - self.gapHeight - self.signalWaveYSpacing/4))
+				path.cubicTo(
+							QtCore.QPointF(x0 + self.waveHalfDuration/2 + 25 + xstep+i, yBasis - 3*self.gapHeight/4),
+							QtCore.QPointF(x0 + self.waveHalfDuration/2 - 23 + xstep+i, yBasis - self.gapHeight/4),
+							QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep+i, yBasis + self.signalWaveYSpacing/4))
+				self.scene.addPath(path, self.gapPen)
 
 def main():
 	app = QApplication(sys.argv)
