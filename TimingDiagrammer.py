@@ -517,6 +517,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					annot = annot[:brktPos]
 
 			if annot != '':
+				annot = annot.replace(chr(3), '[')
 				updateViewPortLocal = updateViewPort and (annotNum == waveNum or annotNum == waveNum + 1)
 				#print ("annotNum = ", annotNum, " waveNum = ", waveNum)
 				if self.currentLineHasArrow == True:
@@ -543,9 +544,9 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		if cmdNum == 1:
 			#process signal name
 			#simplifies parsing multi-char tokens
+			cmd = cmd.replace(chr(1), '#')
 			cmd = cmd.replace(chr(2), ';')
 			cmd = cmd.replace(chr(6), ',')
-			cmd = cmd.replace(chr(1), '#')
 			self.tdDrawSigNamesText(cmd, whichCommandHasCursor == 1)
 		elif cmdNum == 2:
 			xCurrent = 0
@@ -734,6 +735,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			self.timeDelta = 0
 					
 		elif cmdNum == 3:
+			cmd = cmd.replace('\[', chr(3))
 			#print ("-- B seeing cmd = ", cmd, "-- seeing cmd4 = ", cmd4, " self.currentLineHasArrow = ", self.currentLineHasArrow)
 			self.doAnnotationCmd (cmd, cmd4, whichCommandHasCursor == 3, charPosWithinCmd)
 			#print ("-- B self.linesWithArrow = ", self.linesWithArrow)
@@ -827,7 +829,6 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		cmd1Len = 0
 		for cmd in dataList:
 			####if cmd.find('some text data') >= 0 or cmd.find('AOIR1') >= 0:
-			#cmd = cmd.replace (chr(2), ';') #put back the ';' character
 			if cmdNum == 1:
 				cmd1Len = len(cmd)
 			cmd4 = ''
