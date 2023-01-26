@@ -1,0 +1,32 @@
+#!show grid even
+#!set tick 100 #clock period
+#!set tran 12 #transition time
+#!set font Sans 
+#!set fontsize 12
+#!set signalwidth 100 #max. length of the name of signal
+#!set arrowadj 9 #arrow vertical offset
+#!set arrtxtadj 5 #arrow text vertical offset
+#!set arrmarkadjup 80 #arrow end line upper length
+#!set arrmarkadjdn 10 #arrow end line lower length 
+sig;ppp 
+sig;lhlhlllR/hFl
+sig2;lllhhhhF/Fll
+blank;ssssssss/  
+s;lllhl
+s2;hhh4Fll
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

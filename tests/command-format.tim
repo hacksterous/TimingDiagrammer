@@ -1,0 +1,4 @@
+#!margin bottom 50
+;;,,,,,,,signal name \;        waveform command\;     wave annotations ('\,'-separated) \[annotation parameters are: delay\, vert\, color\, arrow\, size and font.][delay=100 size=12 color=b]
+;;,,,,,,,wdata\[31:0]  \;  X$GdDdDdDdDdDx  \;  'X'\[color=t]\,   red is up\[color=r delay=19  vert=9]\,  blue is down \[color=b delay=19 vert=-9][size=13 delay=50]
+wdata[31:0];X$ydDdDdDdDdDx;'X'[color=t],data0[color=r delay=19],,red is up[color=r delay=19 vert=9],,blue is down[color=b delay=19 vert=-9 delay=25]

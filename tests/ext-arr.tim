@@ -1,0 +1,9 @@
+#!show grid both
+#!set tick 100
+#!set height 40
+#!set tran 14
+#!set arrtxtadj 7 
+
+;|<------>sssssssss;,x,arrow ,,timing params;,,::r::1,,2::b::1
+
+p;pp

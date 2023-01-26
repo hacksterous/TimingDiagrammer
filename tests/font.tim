@@ -1,0 +1,16 @@
+#!grid odd
+#!grid both
+#!tick 100
+#!tran 12
+#!font Garuda
+#!fontsize 12
+#!signalwidth 290
+signal name is very long[31:0];PPP
+
+
+
+
+
+
+
+

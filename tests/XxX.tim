@@ -1,0 +1,8 @@
+#!grid both
+#!tick 150
+#!tran 12
+#!font Sans
+#!fontsize 12
+#!signalwidth 120
+X;XxX
+

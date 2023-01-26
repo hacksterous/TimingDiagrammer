@@ -1,0 +1,24 @@
+high 'h';h
+low 'l';l
+rise 'r';r
+fall 'f';f
+data 'd';d
+data change 'D';D
+unknown 'x';x
+unknown change 'X';X
+floating 'z';z
+rise unknown 'R';R
+fall unknown 'F';F
+clock ideal 'p';p
+clock 'P';P
+space 's';s
+
+arrow left '<';s<;
+;s
+arrow middle '-';s-
+;s
+arrow right '>';s>
+;s
+waveform gap '/';s/
+; 
+

@@ -1,0 +1,16 @@
+p;Xhhl|sssssssssssss
+k;flll|llfssssssssss
+f;hfll|
+r;lrll|
+X;XXXX|
+pp;pp|
+p;llll|
+pp;9pp|pp
+pp2;8pp|p
+s;7Pxx|XPPPPP;s, s,       s,h
+ss;PPlllllllllhh;A,BfX,C, D,E,F,G,H,I,J,K,L;4,1,4,,,6
+;ss8:8<-->sssssssss;,,,s;,,,6
+;ss:6<------------->;,,,This is a very long annotation in,,,,,,,red on the arrow;,,,delay=100 color=b,,,,,,,delay=4 color=r
+dd [7:0];DDss|sssssssssss;D1,D2;3::b,3::r
+;<------>sssssssss;x,arrow,,timing params;delay=3 color=r,color=g,,delay=9 color=b 
+p;p

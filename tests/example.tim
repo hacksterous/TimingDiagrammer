@@ -1,0 +1,19 @@
+#!color grid odd b
+#!color grid even r
+;;,,,,,,,,,Sample Timing Diagrammer Output[size=14 color=g width=]
+clock;PPPPPPPPPl
+clk;pppppppppx;,1,,2,,3,,4,,5,,6,,7,,8,,9;,3,,3,,3,,3,,3,,3,,3,,3,,3
+write;llrhhhfllllllllllll
+example_read;llllllllrhhhhhfllll
+addr000[31:0];$pxxxdddDxxddddddxxxx;,,,,,A1,,,,,,,A2
+wdata-1;$Yxxxddddxxxxxxxxxxxx;,,,,write data[color=g],,,,,,,,,,,don't care data
+#;s4<---------------->s;,,12 eons,,,,,,,,,,,,20ns
+ack;xxxxxhhxxlllrhhxxxx
+#;s4<->ssssssssssssssss;,T ns;,7
+#;<->sssssssssssssssss;1ns;
+rdata[127:0];xxxxxxxxxxxxxddxxxx;,,,,,,,,,,,,,Q2[color=g],,,some text data in blue in small font[size=7 delay=35 color=b width=]
+valid;RhFlRhFllllllllllll
+| or ||;lh$l5|lhh$b|rfrfrfrfrfrfrh
+#;ss<-->ssssssssssssssss;,,,arrow;,6
+
+

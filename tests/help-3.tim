@@ -1,0 +1,42 @@
+#!show grid both
+#!set tick 100
+#!set tran 12
+#!set font Calibri
+#!set fontsize 15
+#!set signalwidth 100
+#!set arrowadj 9
+#!set arrtxtadj 5
+
+;;signal name  \;,,,waveform commands \;,,,,wave annotations ('\,'-separated) \;,,,,,,annotation parameters
+;
+;;wdata[31:0]\;xdDdDdDdDdDxX\;,,,,,  `X'\,data0 \,data1 \,  \; 3\,4\,\, 4
+;
+wdata[31:0];$OxdDdDdDdDdDxX;`X',data0,,data1;3,4,,4
+
+
+#all arrows here
+#first arrow row
++175:198:166:131:199:94
++295:199:388:141:382:94
++494:200:601:149:623:97
++618:200:846:138:874:93
+
+#2nd arrow row
+
++87:321:177:222
++353:311:301:218
++736:315:393:218
+
+;
+DATA;DDDDDD;D1,D2,D3,D4,D5,D6;2,2,2,2,2,2
+DATA;;DDDDDD\;D1\,D2\,D3\,D4\,D5\,D6\;2\,2\,2\,2\,2\,2
+;
+
++173:490:152:525
++222:486:195:497:167:527
++274:485:215:498:179:529
+
++116:480:120:520
++;horizontal (time) delay specs for text on each grid;127:578
++
++422:543:348:575:341:569

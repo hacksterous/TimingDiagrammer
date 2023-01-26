@@ -1,0 +1,21 @@
+#!grid both
+#!tick 100
+#!height 40
+#!tran 16
+#!arrtxtadj 7 
+#;;,,,Top Header
+#;!|;,,this is a header
+;;signal name[310];r100
+Color-dDd\;;$rdDl/d
+z;lzl/8zxlh/lxzl
+0;2dDl/~Pfl/6Dl7Dl4Df4Dz3Df3DP4DxDD;,,x;,,1
+
+;6881<--->s;,x,arrow,Z;,,,3
+zaa;lzl/8zxlh/lxzl
+;ss
+ss;xx/xx;  unknown 
+;ssss
+;3<-->;x,arrow,t;
+;2<-->;arrow2;delay=50
+;
+s;xxxx

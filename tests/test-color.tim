@@ -1,0 +1,37 @@
+#!grid both
+#!tick 100
+#!tran 15
+0;$Opd
+-1;$oPdh
+00;$OldX
+pD;$YpD
+lD;$Yld
+rD;$YrD
+000;$crDrhhlpdPpD
+0;$cpdhldXXzDXprDrhhlpdPpD
+0;$cxhlfXdfhlzXpdhldXXzDXprDr
+001;$OhhlpdPpD
+11;$gfd
+111;$YdDhrhDfXphPlxlzhXh
+111_1;$yxrdxdpxPPxXDhrr
+2;$cPDpxzxdrxPPDfhDDxXPDf
+22;$rfxDxlhfDlfDDxdr
+3;$cfD
+33;fx
+333;$YlpPxXhPlPfz
+3333;$yPdDPlzfhrDpdpzxpP
+4;$chfrfXhDfffzhr
+44;$ypxfDPpzfdlDX
+444;$rfDhzrlDfpxD
+5;$cpphdhrzrpDxpxr
+55;$Yhhfld
+555;$YPDp
+5555;$chdPrllfpDfxPhD
+6;$czdphhrXlXrxzrrpfDf
+66;$tldfrPdDllzPprXddDx
+7;$cDrPzhPpdzdhrldxdzDdh
+77;$oXrdfphPzDdfpzDzrrPX
+8;$cdPXPXDfhlXdXdpPh
+88;$xzpfxhdDddXPXPddzdPprh
+9;$cdfXxrpzxhlrhhlfXPdr
+99;$kzdpXddrphdPPXrxlDzDx

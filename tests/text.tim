@@ -1,0 +1,16 @@
+#!grid even
+#!tick 100
+#!tran 12
+#!font serif
+#!size 16
+
+;;,,,,,,,Example Timing Diagrammer Timing Diagram[width= delay=100 size=16 color=o]
+clkc;pppppppppx;,1[center=n delay=10],,2,,3,,4,,5,,6,,7,,8,,9
+write;llrhhhfllllllllllllhhlhllhlhlhpppp
+this_is_a_very_long_signal_name_for_just_a_simple_read;llllllllrhhhhhfllllhllllrfrfrfflhh
+addr[31:0];xxxdddDxxddddddxxxx;,,,,A1[size=14 delay=25],,,,,,,,A2[size=14 delay=-25]
+wdata[127:0];xxxddddxxxxxxxxxxxx;,,,,write data,,,,,,,,don't care data
+;s0<----------------->;,,12 eons,,,,,,,,,,,,20ns;
+ack;xxxxxhhxxlllrhhxxxxXXX
+;4s<->;,T ns,more;
+rdata[127:0];xxxxxxxddxxxx;,,Q2,, some text data,, more,more

@@ -1,0 +1,44 @@
+#!grid both
+#!tick 90
+#!tran 12
+#!font Cambria
+#!size 12
+#!signalwidth 100
+#!arrowadj 9
+#!arrtxtadj 3
+
+;;,,,,,Example of arrows;,,,,,::r:15:-1
+;
+;s:7<->;,10ns;,3::b:8:12
+s;lhl!hl|rsssssssss;;
+;:2:4<-------------->;,,,,,,,12 eons,,,,,,20ns;
+s1;lhlhl|ssssssssss
+;s1:4:<->;,10 ns;,4
+;sssss|ssssssssss
+;+;TEXT,NEW;378:393:g:6:1,378:444:m:5:
+;+166:423:521>;
++229:379:494;
++267:488:515: 133
++;ANOTHER;472:453:r:4:10
++229:379:494>
+
+
++;ALTERNATETEXT;256:423
++271:401:491>
++;sample text;225:468 
++291:513:399:535:441:509>
++;sample text 2;149:400
+
++505:442:599:479:741:496
++528:398:541:280:690:186
++349:486:445:547:614:509>
++172:513:301:547:659:415
++309:377:592:320:600:400
+#!set font Calibri
+#!set fontsize 15;
+;
+sign;llhlhlhppssss
+;s;,signal description\;10 (delay) : 5 (width) : b (colour blue) : font size : vertical text placement adjust;,:1000:b:2:7
+ 
+
+#+229:642:241:749

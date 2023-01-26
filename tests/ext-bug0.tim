@@ -1,0 +1,10 @@
+#!set signalwidth 100 #max. length of the name of signal
+#!set arrowadj 9 #arrow vertical offset
+#!set arrtxtadj 5 #arrow text vertical offset
+#!set arrmarkadjup 80 #arrow end line upper length
+#!set arrmarkadjdn 10 #arrow end line lower length 
+
+
+;ss8<------------->sssss;,,,This is a very long annotation in,,,,,,,red;,,,delay=100 color=b,,,,,,,delay=4 color=r
+dd [7:0];|!DDsssssssssssss;D1,D2;delay=3 color=b,delay=3 color=r
+;<------>;,x,arrow,,timing params;,delay=3 color=r delay=5 vert=-7,,,delay=9 color=b

@@ -1,0 +1,23 @@
+#!show grid both
+#!set tick 100
+#!set tran 12
+#!set font Sans
+#!set fontsize 12
+#!set signalwidth 100
+#!set arrowadj 9
+#!set arrtxtadj 5
+#!set arrmarkadjup 80
+#!set arrmarkadjdn 10
+xD;xD
+xd;xd
+Xd;Xd
+xx;xX
+color-xD;$mxD
+color-xd;$cxd
+dD;dD
+dd;dd
+color-Dd;$YDd
+Dd;Dd
+
+
+

@@ -1,0 +1,14 @@
+#!show grid odd
+#!show grid both
+#delayx.tim
+#!set tick 100
+#!set tran 12
+clock;P
+gg;6rxx;,unknown;,3
+;4:<-->;,arrow;
+rd;2rd
+rX;3rX
+fx;6fxd
+fX;4fX
+fd;3fd
+fD;xd

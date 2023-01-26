@@ -1,0 +1,14 @@
+#!grid both 
+#!tick 100 #clock period
+#!tran 12 #transition time
+#!font Sans 
+#!fontsize 12
+#!signalwidth 100 #max. length of the name of signal
+#!arrowadj 9 #arrow vertical offset
+#!arrtxtadj 5 #arrow text vertical offset
+#!arrmarkadjup 80 #arrow end line upper length
+#!arrmarkadjdn 10 #arrow end line lower length 
+clk;PPPP
+clk2;PPPP
+clk3;pppp
+clk4;pppp

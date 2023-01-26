@@ -1,0 +1,13 @@
+#!grid both 
+#!tick 80 
+#clock period
+#!tran 24 
+#transition time
+#!font serif
+#!fontsize 14
+#!signalwidth 100 #max. length of the name of signal
+
+sig;llhl|hlh
+;s6|6<--->;,,,arrow;
+;ssss
+s;lhlhlhl

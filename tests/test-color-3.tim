@@ -1,0 +1,11 @@
+#!grid both
+#!tick 120
+#!tran 12
+#!font serif
+#!size 16
+#!width 100
+-1;4p4|4p|h
+;lh4|lhlssssssss
+0;$c6|3Xd4|6rX9|Dp
+;6<-3-->ssss;,arrow;
+s;lhlhlh
