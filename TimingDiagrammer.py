@@ -631,12 +631,15 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					(self.waveHeight + self.signalWaveYSpacing) + self.linesWithArrow * self.arrowLineAdjust
 				self.yBasisRegistered = yBasis
 
-				if thisC not in "DXz0123456789/<->dx|":
+				#print ("processCommand: A. thisC = ", thisC, " lastC = ", lastC, " pendingTimeDelta = ", self.pendingTimeDelta)
+				if thisC not in "DXz0123456789/<->|dx" or (thisC in "dx" and lastC not in "RFDXz"): 
 					#for meta chars, don't reset since following chars will decide
 					#for DXz, pendingTimeDelta will be used and pendingTimeDelta will be assigned from timeDelta at end of function
-					#for dx, pendingTimeDelta will be used and pendingTimeDelta will be set to 0 at the end of the function
+					#for dx, pendingTimeDelta will be used only if the last char was R or F 
+					#and pendingTimeDelta will be set to 0 at the end of the function
 					self.pendingTimeDelta = 0
 					#print ("B. thisC = ", thisC, " self.pendingTimeDelta reset to ", self.pendingTimeDelta)
+				#print ("processCommand: B. thisC = ", thisC, " lastC = ", lastC, " pendingTimeDelta = ", self.pendingTimeDelta)
 
 				if thisC == '|':
 					if waveCount > 0 or self.timeDelta > 0:
@@ -1241,25 +1244,22 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			self.currentFileName += '.tim'
 		if os.name == 'nt':
 			self.currentFileName = self.currentFileName.lower()
-		if self.currentFileName != 'Untitled.tim':
-			success = self.writeCurrentFileBackend()
-		elif not os.path.exists(self.currentDirName):
-			msg = QMessageBox()
-			msg.setIcon(QMessageBox.Critical)
-			msg.setText("Error: Illegal directory.")
-			msg.setWindowTitle("File Write Error")
-			msg.exec_()
-			success = 0 #write failed
+		success = self.writeCurrentFileBackend()
 		return success
 
 	def fileSave (self, event=None):
+		#print ("fileSave: self.currentFileName = ", self.currentFileName, " self.editorIsModified =", self.editorIsModified, " os.path.isfile(self.currentFileName)", os.path.isfile(self.currentFileName))
 		success = 0
 		if self.editorIsModified == False and os.path.isfile(self.currentFileName):
-			return -2 #no need of write when existing file is not modified
-		#print ("fileSave: self.currentFileName = ", self.currentFileName)
-		if self.currentFileName != 'Untitled.tim' or not os.path.isfile(self.currentFileName):
+			return success #no need of write when existing file is not modified
+		if self.currentFileName == 'Untitled.tim':
+			#print ("fileSave: calling fileSaveAs (1)")
+			success = self.fileSaveAs(None)
+		elif not os.path.isfile(self.currentFileName):
+			#print ("fileSave: calling writeCurrentFile")
 			success = self.writeCurrentFile()
 		else:
+			#print ("fileSave: calling fileSaveAs (2)")
 			success = self.fileSaveAs(None)
 		return success
 
@@ -1270,12 +1270,27 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			self.currentDirName = os.path.dirname(os.path.abspath(__file__))
 		fDialog.setDirectory(self.currentDirName)
 		fileName, _ = fDialog.getSaveFileName(self, 'Save File', '', '*.tim')
-		print ("fileSaveAs: fileName = ", fileName)
+		#print ("fileSaveAs: fileName = ", fileName)
 		if fileName != 'Untitled.tim' and fileName != '':
 			self.currentDirName = os.path.dirname(fileName)
 			self.currentFileName = os.path.basename(fileName)
 			success = self.writeCurrentFile()
 			self.discardModalDialogChars = True
+		elif fileName == 'Untitled.tim':
+			msg = QMessageBox()
+			msg.setIcon(QMessageBox.Critical)
+			msg.setText("Error: Illegal file name.")
+			msg.setWindowTitle("File Write Error")
+			msg.exec_()
+			success = 0 #write failed
+		elif not os.path.exists(self.currentDirName):
+			msg = QMessageBox()
+			msg.setIcon(QMessageBox.Critical)
+			msg.setText("Error: Illegal directory.")
+			msg.setWindowTitle("File Write Error")
+			msg.exec_()
+			success = 0 #write failed
+
 		return success
 
 	def fileExport (self, event=None):
@@ -1656,7 +1671,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				x1 += self.waveTransitionTime/2 
 				y0 = yBasis
 				y1 = yBasis
-				self.scene.addLine(QtCore.QLineF(x0, y0, x1, y1), self.debugPen)
+				self.scene.addLine(QtCore.QLineF(x0, y0, x1, y1))
 			elif nextC == 'z':
 				x0 = x1
 				x1 += self.waveTransitionTime
@@ -2018,7 +2033,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 							xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis))
 						if lastC == 'F':
 							self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 + self.waveTransitionTime - self.pendingTimeDelta, yBasis, 
-								xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight), self.debugPen)
+								xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight))
 			else:
 				self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor("light grey")))
 
@@ -2159,6 +2174,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 
 				self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis, x1 - self.pendingTimeDelta, yBasis))
 				self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight, x1 - self.pendingTimeDelta, yBasis - self.waveHeight))
+		self.pendingTimeDelta = 0
 
 	def tdDrawDataDX(self, waveCount=-1, lastC=None, thisC=None, nextC=None, basis=(0, 0)):
 		#print ("tdDrawDataDX: thisC=", thisC, " ord nextC=", ord(nextC), nextC, " lastC=", lastC)
@@ -2231,12 +2247,12 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 						self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
 
 					if lastC == 'z':
-						#redo the angled lines only if last was D or X or z or l or r or R
+						#redo the angled lines only if last was D or X or z
 						self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis, 
 							xBasis - self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight/2))
 						self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight, 
 							xBasis - self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis - self.waveHeight/2))
-					elif lastC in 'DX':
+					elif lastC in 'DXx':
 						#print ("tdDrawDataDX: 1. waveCount != 0 and lastC in 'DX'")
 						self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 - self.pendingTimeDelta, yBasis, 
 							xBasis - self.pendingTimeDelta, yBasis - self.waveHeight/2))
@@ -2348,7 +2364,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			self.scene.addLine(QtCore.QLineF(gx1 - self.timeDelta, yBasis, 
 						gx1 + self.waveTransitionTime - self.timeDelta, yBasis - self.waveHeight/2))
 			self.scene.addLine(QtCore.QLineF(gx1 + self.waveTransitionTime - self.timeDelta, yBasis - self.waveHeight/2, 
-				x1, yBasis - self.waveHeight/2))
+				x1, yBasis - self.waveHeight/2), self.triPen)
 
 		if nextC not in 'zlrRpP':
 			#angled line to top
@@ -2464,7 +2480,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				x1 + self.waveTransitionTime, yBasis - self.waveHeight))
 			self.scene.addLine(QtCore.QLineF(x1 + self.waveTransitionTime - self.timeDelta, yBasis, 
 				x1 + self.waveTransitionTime, yBasis))
-			self.scene.addLine(QtCore.QLineF(x0 - self.pendingTimeDelta, y0, x1 - self.timeDelta, y1))
+			self.scene.addLine(QtCore.QLineF(x0 - self.pendingTimeDelta, y0, x1 - self.timeDelta, y1), self.triPen)
 		elif nextC in 'hfF':
 			self.scene.addLine(QtCore.QLineF(x0, y0, c - self.waveTransitionTime - self.timeDelta, y0), self.triPen) 
 			self.scene.addLine(QtCore.QLineF(x0 + self.waveHalfDuration - self.timeDelta, y0, c - self.timeDelta, yBasis - self.waveHeight))
