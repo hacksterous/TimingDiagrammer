@@ -603,7 +603,11 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				if lastC == '$':
 					#print ("processCmd-mainloop: lastC was $")
 					cNum += 1
-					self.currentColor = thisC
+					if thisC != 'x':
+						self.currentColor = thisC
+					else:
+						#illegal color 'x', set to 'white'
+						self.currentColor = 'w'
 					if thisC not in colorMap.keys():
 						self.label.setText("Error: Wrong color code: " + thisC + ".")
 						
@@ -719,6 +723,11 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					self.tdDrawTri(waveCount, nextC, (xBasis, yBasis))
 					waveCount += 1
 					self.timeDelta = 0
+				elif thisC == 'S':
+					#char to draw the grid lines, but does not advance waveCount
+					#does not add space
+					self.tdDrawSpace(waveCount, cmd, (xBasis, yBasis))
+					self.timeDelta = 0
 				elif thisC == 's':
 					self.tdDrawSpace(waveCount, cmd, (xBasis, yBasis))
 					waveCount += 1
@@ -795,7 +804,10 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		if directiveList[0] == "grid":
 			#print ("----show grid directive found")
 			if len(directiveList) > 1:
-				if directiveList[1] == "both":
+				if directiveList[1] == "off":
+					self.evenGridsEnabled = False
+					self.oddGridsEnabled = False
+				elif directiveList[1] == "both":
 					self.evenGridsEnabled = True
 					self.oddGridsEnabled = True
 				elif directiveList[1] == "odd":
@@ -906,11 +918,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			else:
 				val2 = 0
 			#print ("val2 = ", val2)
-			if directiveList[0] == "height":
-				if val2 < 10:
-					self.waveHeight = 10
-				else:
-					self.waveHeight = val2
+			if val2 > 20 and directiveList[0] == "height":
+				self.waveHeight = val2
 				self.gapHeight = self.waveHeight
 				self.signalWaveYSpacing = self.waveHeight
 				self.arrowVertOffset = -self.waveHeight/2 - self.signalWaveYSpacing
@@ -1053,6 +1062,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		lastBlock = self.plainTextEdit.document().blockCount()
 		dataArray = []
 		line = 0
+		
+		self.resetParameters()
 		for i in range (0, lastBlock):
 			data = self.plainTextEdit.document().findBlockByNumber(i).text()
 			if data.strip() == '':
@@ -1437,7 +1448,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		xBasis, yBasis = basis
 		#print ("tdDrawHorizArrow: waveCount = ", waveCount)
 		if thisC == '<':
-			if waveCount > 0:
+			if True: #waveCount > 0:
 				#draw the grid
 				if (self.evenGridsEnabled == True and (waveCount % 2) == 0):
 					self.scene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, 

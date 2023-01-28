@@ -1,4 +1,4 @@
-#!show grid even
+#!grid both
 #!set tick 100
 #!set tran 12
 #!set font Cambria
@@ -7,5 +7,7 @@
 #!set arrowadj 9
 #!set arrtxtadj 5
 addr[31:0];xxxdddDxxddddddxxxx;,,,,,AOIR1,,,,,,,A2
-;<--->;,12ns;
-rdata[127:0];xxxxxxxddxxxx;,,Q2,, some text data;
+;S<--->sssssssssssssss;,12ns;
+#!height 51
+rdata[127:0];xxxxxxxddxxxxssssss;,,Q2,, some text data;
+;<--
