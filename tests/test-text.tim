@@ -6,8 +6,12 @@
 #!set signalwidth 100
 #!set arrowadj 9
 #!set arrtxtadj 5
-addr[31:0];xxxdddDxxddddddxxxx;,,,,,AOIR1,,,,,,,A2
-;S<--->sssssssssssssss;,12ns;
+addr[31:0];xxxdddDxxddddddxxxxxxx;,,,,,AOIR1,,,,,,,A2
+;S<--->ssssssssssssssssss;,12ns[vert=-40];arrow=-40
 #!height 51
-rdata[127:0];xxxxxxxddxxxxssssss;,,Q2,, some text data;
-;<--
+rdata[127:0];xxxxxxxddxxxxxxxxxxxxx;,,Q2,, some text data,,,DATA[delay=20 color=b size=15];
+;S<--sssssssssssssssssss
+s;lhlhlhlhlhlhlhlhlhlfll
+##!height 70
+c;pppPppppppp
+C;PPPPPPPPPPP
