@@ -30,7 +30,7 @@ Timing Diagrammer can be run from the source like above, or run from the binary 
 
 Here is a video of Timing Diagrammer being used to draw a simple timing diagram -- 
 
-https://user-images.githubusercontent.com/16697108/213831850-51e625aa-134a-42c1-a142-1d7bc17436d3.mp4
+![Animation](https://user-images.githubusercontent.com/16697108/216374652-d593b8e5-1e76-49cf-889d-c9ec917e5616.gif)
 
 The usual disclaimer applies.
 
