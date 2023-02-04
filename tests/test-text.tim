@@ -1,17 +1,16 @@
 #!grid both
-#!set tick 100
-#!set tran 12
-#!set font Cambria
-#!set fontsize 12
-#!set signalwidth 100
-#!set arrowadj 9
-#!set arrtxtadj 5
+#!grid 24
+#!tick 120
+#!tran 10
+#!font Cambria
+#!fontsize 12
+#!signalwidth 100
 addr[31:0];xxxdddDxxddddddxxxxxxx;,,,,,AOIR1,,,,,,,A2
-;S<--->ssssssssssssssssss;,12ns[vert=-40];arrow=-40
-#!height 51
+;S<--->ssssssssssssssssss;,12ns[vert=0];arrow=0
+#!height 5
 rdata[127:0];xxxxxxxddxxxxxxxxxxxxx;,,Q2,, some text data,,,DATA[delay=20 color=b size=15];
 ;S<--sssssssssssssssssss
 s;lhlhlhlhlhlhlhlhlhlfll
-##!height 70
+#!height 70
 c;pppPppppppp
 C;PPPPPPPPPPP

@@ -1,14 +1,15 @@
-#!grid odd
-##!grid both
+#!grid 16
+#!grid both
 #!tick 100
 #!tran 12
 #!font Garuda
 #!fontsize 12
+clk;pppp
 qwerty;Dx
-0signal;d3x6P4D6P0p0x7P1Dx
-signal-x1;D7P4d5d5X8d47P8D4
-2;d6d2d0D82D5D6d1P6
-3;4P3D68x7x7x8x1P8
+0signal;d3x4D6x1Dx
+signal-x1;D7P4d5d5X8d48D4
+2;d6d2d0D82D5D6d
+3;4P3D68x7x7x8x1
 4;D6p17X7X7P5d0P5X4
 5;X8p05X2D1x2X4x1P1
 6;d4D4P2P7X5d2D3D4D0

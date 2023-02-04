@@ -1,0 +1,8 @@
+#!grid 12
+#!tran 15
+#!tick 120 
+;lhlllhll
+;CKPPPP
+;ss<->;,,1 clock period[delay=17 size=8]
+;s<->;,1 clock period[vert=-10 delay=17 size=8];arrow=-10
+;;,,,,,,Timing Diagrammer[size=16 color=b

@@ -1,7 +1,8 @@
 #!grid both
-#!tick 100
-#!tran 12
-0;$t0X4x$G1d6x7z$A2X$p8z$g4D0d$C5z2d6z1d$t3D$O1X
+#!tick 120
+#!tran 15
+#!height 40
+0;$t0X4x$G1d6x7z$A2X$p8z$g4D0d$C5z2d6z1d$t3D1X
 1;8D7X5D$k0D6z$k7d$r0x4D7x$G7D7X$o3X3z$v2z2z
 2;$P7x3z$g8X$v4d5D8D$w3z$C8x8z$m5X$k7d8x5d$P3x7z
 3;0X$a0D$o1d8z3D7D$k0z$w1z3X5d0X$B8d5z1D3d

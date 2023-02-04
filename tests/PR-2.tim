@@ -1,3 +1,5 @@
+#!grid 15
+#!color grid even #3333ff
 0;$rX6x8d
 1;X6x8d
 2;$r4D7X4D4d0d6x1X6x8d2X6x7D5x0d4x
@@ -5,8 +7,8 @@
 
 2a;$r4Xd
 2b;$r2XxD
-$r4D4d;$r4Dd
-;$r4zd
+4D;$r4D4d$r4Dd
+4zD;$r4zd
 3n;$r4DD
 2g;7X4DD
 2;$r2X6xD
