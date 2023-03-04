@@ -1,4 +1,4 @@
-#!grid 16
+#!grid both
 0;4z6z
 1;5$rX6DzDd
 2;5Dz
@@ -29,18 +29,16 @@ dd;D$b8D
 00;l8zxz
 z;lzl/8zxlh/lxzl
 rpp;rpp
-;<--->s;,x,arrow,Z;,,,3
+s;<--->s;,x,arrow,Z;,,,3
 zaa;lzl/8zxlh/lxzl
-;ss
+s;ss
 ss;xx/xx;,unknown 
-;ssss 
-;3<-->;x,arrow,t;delay=5,delay=1,delay=3
-;2<-->;arrow;delay=45
-;
+s;ssss 
+s;3<-->;x,arrow,t;delay=5,delay=1,delay=3
+s;2<-->;arrow;delay=45
 s;xxxx
 rp;rp
 rl;rl
 z;z$rDz
 Dz;D$rzD
 Dz;$DDzD;D1
-
