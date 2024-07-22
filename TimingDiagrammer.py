@@ -158,7 +158,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		if len(sys.argv) > 1:
 			fileName = sys.argv[1]
 			self.currentDirName = os.path.dirname(fileName)
-			print ("DEBUG: currentDirName = ", self.currentDirName)
+			#print ("DEBUG: currentDirName = ", self.currentDirName)
 			self.currentFileName = os.path.basename(fileName)
 			self.setWindowTitle("Timing Diagrammer - " + self.currentFileName)
 			if os.path.isfile(fileName):
@@ -1807,8 +1807,10 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					x1, yBasis - self.waveHeight))
 				self.scene.addLine(QtCore.QLineF(x0, yBasis - self.waveHeight, 
 					x1, yBasis))
+					
 			if self.fallClockArrow == True:
-				self.tdDrawArrowHeadAngle((x0+self.waveTransitionTime, y1), (-1, 0), self.clockArrowSize)
+				#self.tdDrawArrowHeadAngle((x0+self.waveTransitionTime, y1), (-1, 0), self.clockArrowSize)
+				self.tdDrawArrowHeadAngle((x0, y1), (-1, 0), self.clockArrowSize)
 
 			#add total of waveTransitionTime/2 for pckq pulses
 			if thisIsLastChar == True:
@@ -2008,7 +2010,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 
 	def tdDrawLow (self, waveCount=-1, nextC=None, lastC=None, basis=(0, 0)):
 		xBasis, yBasis = basis
-		if (lastC == "P" or lastC == "p") and waveCount != 0:
+		if lastC.lower() in "cpkq" and waveCount != 0:
 			x0 = xBasis
 		else:
 			x0 = xBasis + self.waveTransitionTime/2
