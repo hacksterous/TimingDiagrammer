@@ -133,6 +133,11 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.resetParameters()
 		self.resetVariables()
 		
+		self.gapPenColor = "#dddddd"
+		self.gapPen = QtGui.QPen()
+		self.gapPen.setColor(QtGui.QColor(self.gapPenColor))
+		self.gapPen.setWidth(7)
+
 		#these two cannot be in resetVariables
 		self.currentDirName = os.path.dirname(os.path.abspath(__file__))
 		self.currentFileName = 'Untitled.tim'
@@ -153,6 +158,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		if len(sys.argv) > 1:
 			fileName = sys.argv[1]
 			self.currentDirName = os.path.dirname(fileName)
+			print ("DEBUG: currentDirName = ", self.currentDirName)
 			self.currentFileName = os.path.basename(fileName)
 			self.setWindowTitle("Timing Diagrammer - " + self.currentFileName)
 			if os.path.isfile(fileName):
@@ -201,7 +207,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.markerPen = QtGui.QPen()
 		self.markerPen.setColor(QtGui.QColor(self.markerPenColor))
 
-		self.gapBrushColor = "#ffffff"
+		self.gapBrushColor = "#aaaaaa"
 		self.gapBrush = QtGui.QBrush(QtGui.QColor(self.gapBrushColor))
 		self.gapBrush.setStyle(Qt.BrushStyle(Qt.SolidPattern))
 
@@ -255,6 +261,16 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				break
 			i += 1
 		return ret
+
+	def drawGrid (self, x0, yBasis, waveCount):
+		if self.maxWaveCount == 0:
+			#draw the grid
+			if (self.evenGridsEnabled == True and (waveCount % 2) == 0):
+				self.scene.addLine(QtCore.QLineF(x0 + self.waveHalfDuration, yBasis - self.waveHeight - self.signalWaveYSpacing + self.waveHeightChange/2 + self.waveHeightChange/2, 
+					x0 + self.waveHalfDuration, yBasis), self.gridOtherPen)
+			elif (self.oddGridsEnabled == True and (waveCount % 2) == 1):
+				self.scene.addLine(QtCore.QLineF(x0 + self.waveHalfDuration, yBasis - self.waveHeight - self.signalWaveYSpacing + self.waveHeightChange/2, 
+					x0 + self.waveHalfDuration, yBasis), self.gridPen)
 
 	def tdDrawArrowHeadAngle(self, startPoint = (100, 100), direction = (0, 1), size = 9):
 		#direction is an angle specified as (height, base) tuple
@@ -716,7 +732,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					waveCount += 1
 					self.timeDelta = 0
 				elif thisC == 'l': #lower case
-					self.tdDrawLow(waveCount, nextC, (xBasis, yBasis))
+					self.tdDrawLow(waveCount, nextC, lastC, (xBasis, yBasis))
 					waveCount += 1
 					self.timeDelta = 0
 				elif thisC == 'h': #lower case
@@ -1990,13 +2006,17 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				self.scene.addLine(QtCore.QLineF(x0 + self.waveHalfDuration, yBasis - self.waveHeight - self.signalWaveYSpacing + self.waveHeightChange/2, 
 					x0 + self.waveHalfDuration, yBasis), self.gridPen)
 
-	def tdDrawLow (self, waveCount=-1, nextC=None, basis=(0, 0)):
+	def tdDrawLow (self, waveCount=-1, nextC=None, lastC=None, basis=(0, 0)):
 		xBasis, yBasis = basis
-		x0 = xBasis + self.waveTransitionTime/2
+		if (lastC == "P" or lastC == "p") and waveCount != 0:
+			x0 = xBasis
+		else:
+			x0 = xBasis + self.waveTransitionTime/2
 		if nextC in "zhdxDXfF":
 			x1 = x0 + self.waveHalfDuration
 		else:
 			x1 = x0 + self.waveHalfPeriod
+
 		y0 = yBasis
 		y1 = y0
 		self.scene.addLine(QtCore.QLineF(x0, y0, x1, y1))
@@ -2024,6 +2044,10 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		elif nextC == 'z':
 			self.scene.addLine(QtCore.QLineF(x1, y0, x1 + self.waveTransitionTime, yBasis - self.waveHeight/2))
 
+		self.drawGrid (x0, yBasis, waveCount)
+
+		#remove below
+		"""
 		if self.maxWaveCount == 0:
 			#draw the grid
 			if (self.evenGridsEnabled == True and (waveCount % 2) == 0):
@@ -2032,6 +2056,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			elif (self.oddGridsEnabled == True and (waveCount % 2) == 1):
 				self.scene.addLine(QtCore.QLineF(x0 + self.waveHalfDuration, yBasis - self.waveHeight - self.signalWaveYSpacing + self.waveHeightChange/2, 
 					x0 + self.waveHalfDuration, yBasis), self.gridPen)
+		"""
 
 	def tdDrawDatadx(self, waveCount=-1, lastC=None, thisC=None, nextC=None, basis=(0, 0)):
 		#print ("tdDrawDatadx: thisC=", thisC, " nextC=", nextC, " lastC=", lastC)
@@ -2041,7 +2066,14 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		color = "light grey"
 		if self.currentColor in colorMap.keys():
 			color = colorMap[self.currentColor]
-		x0 = xBasis + self.waveTransitionTime/2
+
+		#only clocks with zero rise/fall times
+		lastWasClock = (lastC == "c" or lastC == "p") and waveCount != 0
+		
+		if lastWasClock:
+			x0 = xBasis - self.waveTransitionTime/2
+		else:
+			x0 = xBasis + self.waveTransitionTime/2
 
 		if self.maxWaveCount == 0:
 			#draw the grid
@@ -2058,6 +2090,9 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			x1 = x0 + self.waveHalfDuration
 		else:
 			x1 = x0 + self.waveHalfPeriod
+
+		if lastWasClock:
+			x1 += self.waveTransitionTime
 
 		if thisC == 'x' or (thisC == 'd' and self.currentColor != 'x'):
 			#print ("if A --------")
@@ -2250,7 +2285,10 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		#print ("tdDrawDataDX: thisC=", thisC, " ord nextC=", ord(nextC), nextC, " lastC=", lastC)
 		#print ("tdDrawDataDX: at start, self.pendingTimeDelta=", self.pendingTimeDelta)
 		xBasis, yBasis = basis
-		x0 = xBasis + self.waveTransitionTime/2
+		if (lastC == "P" or lastC == "p") and waveCount != 0:
+			x0 = xBasis
+		else:
+			x0 = xBasis + self.waveTransitionTime/2
 		x1 = x0 + self.waveHalfDuration
 		y0 = yBasis
 		y1 = y0
@@ -2571,6 +2609,70 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 
 	def tdDrawGap(self, waveCount, lastC=None, nextC=None, basis=(0, 0)):
 		xBasis, yBasis = basis
+		xShift = -6
+		x0 = xBasis - self.waveHalfDuration/2 + xShift
+		color = self.gapPenColor
+
+		pointList = [QtCore.QPointF(x0 - 5, yBasis - self.waveHeight - self.signalWaveYSpacing/4),
+			QtCore.QPointF(x0 + 2, yBasis - 3*self.waveHeight/4),
+			QtCore.QPointF(x0 - 12, yBasis - self.waveHeight/4),
+			QtCore.QPointF(x0 - 5, yBasis + self.signalWaveYSpacing/4),
+
+			QtCore.QPointF(x0 + 7, yBasis + self.signalWaveYSpacing/4),
+			QtCore.QPointF(x0, yBasis - self.waveHeight/4),
+			QtCore.QPointF(x0 + 17, yBasis - 3*self.waveHeight/4),
+			QtCore.QPointF(x0 + 7, yBasis - self.waveHeight - self.signalWaveYSpacing/4)]
+
+		self.scene.addPolygon(QtGui.QPolygonF(pointList), 
+			QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
+
+		path = QPainterPath()
+		path.moveTo(QtCore.QPointF(x0 - 5, yBasis - self.waveHeight - self.signalWaveYSpacing/4))
+		path.cubicTo(
+					QtCore.QPointF(x0 + 20, yBasis - 3*self.waveHeight/4),
+					QtCore.QPointF(x0 - 28, yBasis - self.waveHeight/4),
+					QtCore.QPointF(x0 - 5, yBasis + self.signalWaveYSpacing/4))
+		self.scene.addPath(path, self.gapPen)
+		path.moveTo(QtCore.QPointF(x0 + 7, yBasis - self.waveHeight - self.signalWaveYSpacing/4))
+		path.cubicTo(
+					QtCore.QPointF(x0 + 30, yBasis - 3*self.waveHeight/4),
+					QtCore.QPointF(x0 - 15, yBasis - self.waveHeight/4),
+					QtCore.QPointF(x0 + 7, yBasis + self.signalWaveYSpacing/4))
+		self.scene.addPath(path, self.gapPen)
+
+		"""
+		xstep = -5
+		xstep2 = 7
+		pointList = [QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep, yBasis - self.waveHeight - self.signalWaveYSpacing/4),
+			QtCore.QPointF(x0 + self.waveHalfDuration/2 + 7 + xstep, yBasis - 3*self.waveHeight/4),
+			QtCore.QPointF(x0 + self.waveHalfDuration/2 - 7 + xstep, yBasis - self.waveHeight/4),
+			QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep, yBasis + self.signalWaveYSpacing/4),
+
+			QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep2, yBasis + self.signalWaveYSpacing/4),
+			QtCore.QPointF(x0 + self.waveHalfDuration/2 - 7 + xstep2, yBasis - self.waveHeight/4),
+			QtCore.QPointF(x0 + self.waveHalfDuration/2 + 7 + xstep2, yBasis - 3*self.waveHeight/4),
+			QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep2, yBasis - self.waveHeight - self.signalWaveYSpacing/4)]
+
+		self.scene.addPolygon(QtGui.QPolygonF(pointList), 
+			QtGui.QPen(Qt.transparent), QtGui.QBrush(QtGui.QColor(color)))
+
+		path = QPainterPath()
+		path.moveTo(QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep, yBasis - self.waveHeight - self.signalWaveYSpacing/4))
+		path.cubicTo(
+					QtCore.QPointF(x0 + self.waveHalfDuration/2 + 25 + xstep, yBasis - 3*self.waveHeight/4),
+					QtCore.QPointF(x0 + self.waveHalfDuration/2 - 23 + xstep, yBasis - self.waveHeight/4),
+					QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep, yBasis + self.signalWaveYSpacing/4))
+		self.scene.addPath(path, self.gapPen)
+		path.moveTo(QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep2, yBasis - self.waveHeight - self.signalWaveYSpacing/4))
+		path.cubicTo(
+					QtCore.QPointF(x0 + self.waveHalfDuration/2 + 35 + xstep, yBasis - 3*self.waveHeight/4),
+					QtCore.QPointF(x0 + self.waveHalfDuration/2 - 15 + xstep, yBasis - self.waveHeight/4),
+					QtCore.QPointF(x0 + self.waveHalfDuration/2 + xstep2, yBasis + self.signalWaveYSpacing/4))
+		self.scene.addPath(path, self.gapPen)
+		"""
+
+	def tdDrawGapDontUse(self, waveCount, lastC=None, nextC=None, basis=(0, 0)):
+		xBasis, yBasis = basis
 		x0 = xBasis - self.waveHalfDuration - 5
 		xstep = -25
 		xstep2 = 15
@@ -2589,7 +2691,8 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		p = self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), self.gapBrush)
 		p.setZValue(2)
 		p = self.scene.addPolygon(QtGui.QPolygonF(pointList), QtGui.QPen(Qt.transparent), self.gapBrush)
-		p.setBrush(QtGui.QBrush(Qt.DiagCrossPattern))
+		###p.setBrush(QtGui.QBrush(Qt.DiagCrossPattern))
+		p.setBrush(QtGui.QBrush(QtGui.QColor(self.gapBrushColor)))
 		p.setZValue(3)
 
 def main():
