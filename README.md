@@ -1,6 +1,9 @@
 # TimingDiagrammer
 ## An application to draw timing diagrams for digital logic.
 
+### Note
+*If you are on Ubuntu 22.04 or later, uninstall python3-pyqt5 if that is installed using apt-get and install PyQt5 using pip3.*
+
 This is a successor to the [waves](https://github.com/hacksterous/waves) app that I wrote a long time ago.
 It was simple, but lacked a few features like saving entire canvas (not just the viewport) as an image (which
 seemed hard to implement in Tk. Also, waves had a few glaring omissions like not supporting the ':' in the 
@@ -13,7 +16,7 @@ I have tried to fix these in Timing Diagrammer, which is written using PyQt5.
 Install PyQT5
 
 ```
-$ pip3 install pyqt5
+$ pip3 install PyQt5
 ```
 
 Run the Python source:
