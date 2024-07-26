@@ -3,10 +3,10 @@ s0;lqllllllllllllllllllll
 s1;ql/lllllllllppp$gdddDD;,,,,,,,,,,,,,,,,,,,          This is green on green[color=g vert=2]
 s2;Ql/lllllllppllllllk
 s3;pl/llllllllllhhhppl
-s4;kl/l
+s4;kl/lsssssssssssssssssss
 s5;cl/ppllppllplP
 +200 130 320 382 239 261 
-;lhlhlh
+;lhlhlhssssss
 +526 132 648 197 572 175 
 +670 199 719 375 709 298 
 +275 438 423 380 
@@ -14,7 +14,7 @@ s5;cl/ppllppllplP
 ;+367 241 620 247 
 ;+626 253 624 374 
 ;+372 182 571 365 463 291 
-;s
+;ssssssssssssssssssss
 clk;cccccccl
 ;+475 500 623 387 
 ;+166 139 774 202 
@@ -24,8 +24,7 @@ clk;cccccccl
 ;^572 555 Here I Am
 ;^724 379 Another arrow
 ;^469 40 Here I Am
-;
-;
+
 cause;llhhllllll
 effect;lllllhhlll
 ;+247 739 359 786 
