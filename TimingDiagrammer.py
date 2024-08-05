@@ -581,7 +581,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			if annot != '':
 				annot = annot.replace(chr(3), '[')
 				updateViewPortLocal = updateViewPort and (annotNum == waveNum or annotNum == waveNum + 1)
-				#print ("annotNum = ", annotNum, " waveNum = ", waveNum)
+				#print ("annotNum = ", annotNum, " waveNum = ", waveNum, " annot = ", annot)
 				if self.currentLineHasArrow == True:
 					self.putText(annot, self.sigNameColWidth + 
 						self.signalWaveXOffset + 
@@ -1287,6 +1287,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.close()
 
 	def mousePressEvent(self, event):
+		print ("mousePressEvent enter - directionArrowTailState = ", self.directionArrowTailState)
 		if event.button() == Qt.LeftButton:
 			pos = self.graphicsView.mapToScene(event.pos())
 			#print ("DEBUG mouse left pos = ", pos)
@@ -1309,6 +1310,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				else:
 					#optional middle arrow point for bezier curve
 					self.directionArrowTailState = 0
+		print ("mousePressEvent exit - directionArrowTailState = ", self.directionArrowTailState)
 
 	def eventFilter(self, obj, event):
 		eventType = event.type()
@@ -1320,6 +1322,9 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				eventText = event.text()
 
 			if eventType == QtCore.QEvent.KeyPress:
+				#key press after second mouse click
+				self.directionArrowTailState = 0
+
 				if (modifiers == QtCore.Qt.ControlModifier and eventKey == Qt.Key_V):
 					print ("DEBUG eventFilter: CTRL-V")
 					#self.editorIsModified = True
@@ -1333,10 +1338,6 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 							#an enter or escape from fileSaveAs dialog can cause editorIsModified to be set to True
 							self.discardModalDialogChars = False
 						else:
-							#key press after second mouse click
-							if self.directionArrowTailState != 0:
-								self.directionArrowTailState = 0
-
 							self.editorIsModified = True
 							self.setWindowTitle("Timing Diagrammer - " + self.currentFileName + " [modified]")
 							#print ("eventFilter: self.editorIsModified is set to True")
@@ -1371,6 +1372,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 
 	def fileOpen (self, event=None):
 		#print ("fileOpen: self.fileOpen = ", self.editorIsModified)
+		self.plainTextEdit.textChanged.disconnect(self.textChangedHandler)
 		if self.editorIsModified == True:
 			qm = QMessageBox()
 			qm.setIcon(QMessageBox.Question)
@@ -1403,6 +1405,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.resetVariables()
 		self.fileReadBackend()
 		self.discardModalDialogChars = True
+		self.plainTextEdit.textChanged.connect(self.textChangedHandler)
 
 	def fileReadBackend(self):
 		#print ("fileReadBackend: self.currentDirName, self.currentFileName = ", self.currentDirName, self.currentFileName)
