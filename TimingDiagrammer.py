@@ -244,6 +244,7 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		self.arrowLineEnds = 10
 		self.fontName = 'Sans'
 		self.fontSize = 10
+		self.oldArrowDelayBehav = False
 
 	def resolvednextC (self, cmd):
 		i = 0
@@ -1673,7 +1674,6 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 			if True: #waveCount > 0:
 				if self.maxWaveCount == 0:
 					#draw the grid
-					#FIXME
 					self.drawGrid (xBasis + self.waveTransitionTime/2, yBasis, waveCount)
 					#if (self.evenGridsEnabled == True and (waveCount % 2) == 0):
 					#	self.graphicsScene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, 
@@ -1688,7 +1688,9 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 					#		yBasis + self.arrowVertOffset), self.gridPen)
 
 			a = xBasis + self.timeDelta
-			c = xBasis + self.waveHalfDuration + self.waveTransitionTime/2 + self.timeDelta
+			c = xBasis + self.waveHalfDuration + self.waveTransitionTime/2
+			if self.oldArrowDelayBehav:
+				c = c + self.timeDelta
 			if waveCount != 0:
 				a -= self.waveTransitionTime/2
 			self.tdDrawArrowHead((a, yBasis + self.arrowVertOffset), 'L')
@@ -1707,22 +1709,24 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 				a, yBasis + self.arrowVertOffset + self.arrowLineEnds))
 			self.currentLineArrowLineList.append(l)
 			l.setZValue(1)
-			self.pendingArrowDelay = self.timeDelta
-			self.timeDelta = 0
+			if self.oldArrowDelayBehav:
+				self.pendingArrowDelay = self.timeDelta
+				self.timeDelta = 0
 		elif thisC == '-':
 			if waveCount > 0:
 				if self.maxWaveCount == 0:
 					#draw the grid
-					if (self.evenGridsEnabled == True and (waveCount % 2) == 0):
-						self.graphicsScene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, 
-							yBasis - self.waveHeight - self.signalWaveYSpacing + self.waveHeightChange/2, 
-							xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, 
-							yBasis + self.arrowVertOffset + self.waveHeightChange/2), self.gridOtherPen)
-					elif (self.oddGridsEnabled == True and (waveCount % 2) == 1):
-						self.graphicsScene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, 
-							yBasis - self.waveHeight - self.signalWaveYSpacing + self.waveHeightChange/2, 
-							xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, 
-							yBasis + self.arrowVertOffset + self.waveHeightChange/2), self.gridPen)
+					self.drawGrid (xBasis + self.waveTransitionTime/2, yBasis, waveCount)
+					#if (self.evenGridsEnabled == True and (waveCount % 2) == 0):
+					#	self.graphicsScene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, 
+					#		yBasis - self.waveHeight - self.signalWaveYSpacing + self.waveHeightChange/2, 
+					#		xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, 
+					#		yBasis + self.arrowVertOffset + self.waveHeightChange/2), self.gridOtherPen)
+					#elif (self.oddGridsEnabled == True and (waveCount % 2) == 1):
+					#	self.graphicsScene.addLine(QtCore.QLineF(xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, 
+					#		yBasis - self.waveHeight - self.signalWaveYSpacing + self.waveHeightChange/2, 
+					#		xBasis + self.waveTransitionTime/2 + self.waveHalfDuration, 
+					#		yBasis + self.arrowVertOffset + self.waveHeightChange/2), self.gridPen)
 
 			#print ("saw - -- pendingArrowDelay = ", self.pendingArrowDelay, "timeDelta = ", self.timeDelta)
 			a = xBasis - self.waveTransitionTime/2 + self.pendingArrowDelay
@@ -1738,11 +1742,16 @@ class TimingDiagrammer(QtWidgets.QMainWindow, TimingDiagrammerUI.Ui_TimingDiagra
 		elif thisC == '>':
 			a = xBasis - self.waveTransitionTime/2 + self.pendingArrowDelay
 			#print ("saw > -- X = ", a, " -- xBasis = ", xBasis, " -- self.timeDelta", self.timeDelta)
-			
-			self.tdDrawArrowHead((a, yBasis + self.arrowVertOffset), 'R')
 
-			l = self.graphicsScene.addLine(QtCore.QLineF(a, yBasis + self.arrowVertOffset - self.arrowLineEnds,
-				a, yBasis + self.arrowVertOffset + self.arrowLineEnds))
+			c = a
+			if not self.oldArrowDelayBehav:
+				c +=  self.timeDelta
+				l = self.graphicsScene.addLine(QtCore.QLineF(a, yBasis + self.arrowVertOffset, c, yBasis + self.arrowVertOffset))
+
+			self.tdDrawArrowHead((c, yBasis + self.arrowVertOffset), 'R')
+
+			l = self.graphicsScene.addLine(QtCore.QLineF(c, yBasis + self.arrowVertOffset - self.arrowLineEnds,
+				c, yBasis + self.arrowVertOffset + self.arrowLineEnds))
 			self.currentLineArrowLineList.append(l)
 			l.setZValue(1)
 
